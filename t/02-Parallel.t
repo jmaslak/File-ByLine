@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use autodie;
 
-use v5.8;
+use v5.10;
 
 use Carp;
 

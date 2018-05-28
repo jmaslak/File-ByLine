@@ -7,7 +7,7 @@
 
 package File::ByLine;
 
-use v5.8;
+use v5.10;
 
 # ABSTRACT: Line-by-line file access loops
 
