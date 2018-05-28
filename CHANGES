@@ -1,4 +1,6 @@
 1.001 - May 28, 2018
+Joelle Maslak <jmaslak@antelope.net>
+ * Add parallized grep/map routines
 Mohammad S Anwar (manwar)
  * Code cleanups
 
