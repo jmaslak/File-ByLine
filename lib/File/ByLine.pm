@@ -110,7 +110,7 @@ This function returns the lines for which the coderef evaluates as true.
 sub greplines (&$) {
     my ( $code, $file ) = @_;
 
-    my @return;
+    my @lines;
 
     open my $fh, '<', $file or die($!);
 
@@ -118,13 +118,13 @@ sub greplines (&$) {
 
         chomp;
         if ( $code->($_) ) {
-            push @return, $_;
+            push @lines, $_;
         }
     }
 
     close $fh;
 
-    return @return;
+    return @lines;
 }
 
 =func maplines
@@ -149,19 +149,19 @@ This function returns the lines for which the coderef evaluates as true.
 sub maplines (&$) {
     my ( $code, $file ) = @_;
 
-    my @return;
+    my @mapped_lines;
 
     open my $fh, '<', $file or die($!);
 
     while (<$fh>) {
 
         chomp;
-        push @return, $code->($_);
+        push @mapped_lines, $code->($_);
     }
 
     close $fh;
 
-    return @return;
+    return @mapped_lines;
 }
 
 =func readlines
@@ -176,19 +176,19 @@ a file.
 sub readlines ($) {
     my ( $file ) = @_;
 
-    my @return;
+    my @lines;
 
     open my $fh, '<', $file or die($!);
 
     while (<$fh>) {
 
         chomp;
-        push @return, $_;
+        push @lines, $_;
     }
 
     close $fh;
 
-    return @return;
+    return @lines;
 }
 
 1;
