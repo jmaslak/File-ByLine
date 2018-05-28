@@ -18,6 +18,8 @@ use autodie;
 use Carp;
 use Fcntl;
 
+use Parallel::WorkUnit 1.117;
+
 =head1 SYNOPSIS
 
   use File::ByLine;
@@ -164,25 +166,13 @@ sub parallel_greplines (&$$) {
     my ( $code, $file, $procs ) = @_;
 
     if ( !defined($procs) ) {
-        croak("Must include number of child processes before filename - Ex: 4:file.txt");
+        croak("Must include number of child processes");
     }
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
-    require Parallel::WorkUnit or croak("Parallel::WorkUnit must be installed");
-    if ( $Parallel::WorkUnit::VERSION < 1.111 ) {
-        croak("Parallel::WorkUnit must be version 1.111 or newer");
-    }
-
     my $wu = Parallel::WorkUnit->new();
-    for ( my $part = 0; $part < $procs; $part++ ) {
-        $wu->async(
-            sub {
-                return _grep_chunk( $code, $file, $procs, $part );
-            }
-        );
-    }
-
+    $wu->asyncs( $procs, sub { return _grep_chunk( $code, $file, $procs, $_[0] ); } );
     return map { @$_ } $wu->waitall();
 }
 
@@ -251,25 +241,13 @@ sub parallel_maplines (&$$) {
     my ( $code, $file, $procs ) = @_;
 
     if ( !defined($procs) ) {
-        croak("Must include number of child processes before filename - Ex: 4:file.txt");
+        croak("Must include number of child processes");
     }
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
-    require Parallel::WorkUnit or croak("Parallel::WorkUnit must be installed");
-    if ( $Parallel::WorkUnit::VERSION < 1.111 ) {
-        croak("Parallel::WorkUnit must be version 1.111 or newer");
-    }
-
     my $wu = Parallel::WorkUnit->new();
-    for ( my $part = 0; $part < $procs; $part++ ) {
-        $wu->async(
-            sub {
-                return _map_chunk( $code, $file, $procs, $part );
-            }
-        );
-    }
-
+    $wu->asyncs( $procs, sub { return _map_chunk( $code, $file, $procs, $_[0] ); } );
     return map { @$_ } $wu->waitall();
 }
 
@@ -380,13 +358,13 @@ sub _open_and_seek {
     if ( !defined($part_number) ) { $part_number = 0; }
 
     if ( $parts <= $part_number ) {
-        croak("Part Number must be greater than number of parts");
+        confess("Part Number must be greater than number of parts");
     }
     if ( $parts <= 0 ) {
-        croak("Number of parts must be > 0");
+        confess("Number of parts must be > 0");
     }
     if ( $part_number < 0 ) {
-        croak("Part Number must be greater or equal to 0");
+        confess("Part Number must be greater or equal to 0");
     }
 
     open my $fh, '<', $file or die($!);
