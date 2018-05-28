@@ -114,9 +114,7 @@ sub greplines (&$) {
 
     open my $fh, '<', $file or die($!);
 
-    my $lineno = 0;
     while (<$fh>) {
-        $lineno++;
 
         chomp;
         if ( $code->($_) ) {
@@ -155,9 +153,7 @@ sub maplines (&$) {
 
     open my $fh, '<', $file or die($!);
 
-    my $lineno = 0;
     while (<$fh>) {
-        $lineno++;
 
         chomp;
         push @return, $code->($_);
@@ -184,9 +180,7 @@ sub readlines ($) {
 
     open my $fh, '<', $file or die($!);
 
-    my $lineno = 0;
     while (<$fh>) {
-        $lineno++;
 
         chomp;
         push @return, $_;
@@ -198,4 +192,3 @@ sub readlines ($) {
 }
 
 1;
-
