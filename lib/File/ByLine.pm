@@ -40,10 +40,15 @@ use Parallel::WorkUnit 1.117;
   my (@result) = maplines { lc($_) } "file.txt";
 
   #
+  # Parallelized forlines routnie
+  #
+  parallel_forlines "file.txt", 10, { foo($_); };
+
+  #
   # Parallelized maplines and greplines
   #
-  my (@result) = parallel_greplines { lc($_) } "file.txt";
-  my (@result) = parallel_maplines  { lc($_) } "file.txt";
+  my (@result) = parallel_greplines { lc($_) } "file.txt", 10;
+  my (@result) = parallel_maplines  { lc($_) } "file.txt", 10;
 
   #
   # Read an entire file, split into lines
@@ -66,10 +71,10 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 ## no critic (Modules::ProhibitAutomaticExportation)
-our @EXPORT = qw(forlines greplines maplines parallel_greplines parallel_maplines readlines);
+our @EXPORT = qw(forlines greplines maplines parallel_forlines parallel_greplines parallel_maplines readlines);
 ## use critic
 
-our @EXPORT_OK = qw(forlines greplines maplines parallel_greplines parallel_maplines readlines);
+our @EXPORT_OK = qw(forlines greplines maplines parallel_forlines parallel_greplines parallel_maplines readlines);
 
 =func forlines
 
@@ -89,19 +94,7 @@ This function returns the number of lines in the file.
 sub forlines ($&) {
     my ( $file, $code ) = @_;
 
-    my ( $fh, $end ) = _open_and_seek( $file, 1, 0 );    # Part[0] of one part
-
-    my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
-
-        chomp;
-        $code->($_);
-    }
-
-    close $fh;
-
-    return $lineno;
+    return _forlines_chunk( $code, $file, 1, 0 );
 }
 
 =func greplines
@@ -125,6 +118,56 @@ sub greplines (&$) {
 
     my $lines = _grep_chunk( $code, $file, 1, 0 );
     return @$lines;
+}
+
+=func parallel_forlines
+
+  my (@result) = parallel_forlines "file.txt", 4, { foo($_) };
+
+Three parameters are requied: a filename, a codref, and number of simultanious
+child threads to use.
+
+This function performs similar to C<forlines()>, except that it does its'
+operations in parallel using C<fork()> and L<Parallel::WorkUnit>.  Because
+the code in the coderef is executed in a child process, any changes it makes
+to variables in high scopes will not be visible outside that single child.
+In general, it will be safest to not modify anything that belongs outside
+this scope.
+
+Note that the file will be read in several chunks, with each chunk being
+processed in a different thread.  This means that the child threads may be
+operating on very different sections of the file simultaniously and no specific
+order of execution of the coderef should be expected!
+
+Because of the mechanism used to split the file into chunks for processing,
+each thread may process a somewhat different number of lines.  This is
+particularly true if there are a mix of very long and very short lines.  The
+splitting routine splits the file into roughly equal size chunks by byte
+count, not line count.
+
+Otherwise, this function is identical to C<forlines()>.
+
+=cut
+
+sub parallel_forlines ($$&) {
+    my ( $file, $procs, $code ) = @_;
+
+    if ( !defined($procs) ) {
+        croak("Must include number of child processes");
+    }
+
+    if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
+
+    my $wu = Parallel::WorkUnit->new();
+    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0] ); } );
+    my (@linecounts) = $wu->waitall();
+
+    my $total_lines = 0;
+    foreach my $cnt (@linecounts) {
+        $total_lines += $cnt;
+    }
+
+    return $total_lines;
 }
 
 =func parallel_greplines
@@ -276,6 +319,35 @@ sub readlines ($) {
 
     return @lines;
 }
+
+# Internal function to perform a for loop on a single chunk of the file.
+#
+# Procs should be >= 1.  It represents the number of chunks the file
+# has.
+#
+# Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
+# number this invocation is processing.
+sub _forlines_chunk {
+    my ( $code, $file, $procs, $part ) = @_;
+
+    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
+
+    my $lineno = 0;
+    while (<$fh>) {
+        $lineno++;
+
+        chomp;
+        $code->($_);
+
+        # If we're reading multi-parts, do we need to end the read?
+        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
+    }
+
+    close $fh;
+
+    return $lineno;
+}
+
 
 # Internal function to perform a grep on a single chunk of the file.
 #
