@@ -97,29 +97,6 @@ sub forlines ($&) {
     return _forlines_chunk( $code, $file, 1, 0 );
 }
 
-=func greplines
-
-  my (@result) = greplines { m/foo/ } "file.txt";
-
-This function calls a coderef once for each line in the file, and, based on
-the return value of that coderef, returns only the lines where the coderef
-evaluates to true.  This is similar to the C<grep> built-in function, except
-operating on file input rather than array input.
-
-Each line (without newline) is passed to the coderef as the first parameter and
-only parameter to the coderef.  It is also placed into C<$_>.
-
-This function returns the lines for which the coderef evaluates as true.
-
-=cut
-
-sub greplines (&$) {
-    my ( $code, $file ) = @_;
-
-    my $lines = _grep_chunk( $code, $file, 1, 0 );
-    return @$lines;
-}
-
 =func parallel_forlines
 
   my (@result) = parallel_forlines "file.txt", 4, { foo($_) };
@@ -168,6 +145,29 @@ sub parallel_forlines ($$&) {
     }
 
     return $total_lines;
+}
+
+=func greplines
+
+  my (@result) = greplines { m/foo/ } "file.txt";
+
+This function calls a coderef once for each line in the file, and, based on
+the return value of that coderef, returns only the lines where the coderef
+evaluates to true.  This is similar to the C<grep> built-in function, except
+operating on file input rather than array input.
+
+Each line (without newline) is passed to the coderef as the first parameter and
+only parameter to the coderef.  It is also placed into C<$_>.
+
+This function returns the lines for which the coderef evaluates as true.
+
+=cut
+
+sub greplines (&$) {
+    my ( $code, $file ) = @_;
+
+    my $lines = _grep_chunk( $code, $file, 1, 0 );
+    return @$lines;
 }
 
 =func parallel_greplines
