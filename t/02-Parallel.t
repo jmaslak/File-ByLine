@@ -35,7 +35,7 @@ subtest parallel_forlines => sub {
 
     my $linecnt = parallel_forlines "t/data/3lines.txt", 4, sub {
         my $line = shift;
-        
+
         if ($line eq 'Line 1') {
             print $fh1 "$line\n";
         } elsif ($line eq 'Line 2') {
@@ -65,14 +65,14 @@ subtest parallel_forlines => sub {
     is( $l2, $lines[1], 'Line 1 correct');
     is( $l3, $lines[2], 'Line 2 correct');
     is( $linecnt, scalar(@lines), 'Return value is proper' );
-  
-    # 
+
+    #
     # Make sure that the code only sees each line once
     #
 
     parallel_forlines "t/data/3lines.txt", 4, sub {
         my $line = shift;
-        
+
         if ($line eq 'Line 1') {
             unlink $fn1 or die($!);
         } elsif ($line eq 'Line 2') {
