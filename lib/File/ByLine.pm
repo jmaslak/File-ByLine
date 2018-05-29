@@ -47,7 +47,7 @@ use Parallel::WorkUnit 1.117;
   #
   # Parallelized maplines and greplines
   #
-  my (@result) = parallel_greplines { lc($_) } "file.txt", 10;
+  my (@result) = parallel_greplines { m/foo/ } "file.txt", 10;
   my (@result) = parallel_maplines  { lc($_) } "file.txt", 10;
 
   #
@@ -99,7 +99,7 @@ sub forlines ($&) {
 
 =func parallel_forlines
 
-  my (@result) = parallel_forlines "file.txt", 4, { foo($_) };
+  my (@result) = parallel_forlines "file.txt", 10, { foo($_) };
 
 Three parameters are requied: a filename, a codref, and number of simultanious
 child threads to use.
@@ -172,7 +172,7 @@ sub greplines (&$) {
 
 =func parallel_greplines
 
-  my (@result) = parallel_greplines { m/foo/ } "file.txt", 4;
+  my (@result) = parallel_greplines { m/foo/ } "file.txt", 10;
 
 Three parameters are requied: a coderef, filename, and number of simultanious
 child threads to use.
@@ -253,7 +253,7 @@ sub maplines (&$) {
 
 =func parallel_maplines
 
-  my (@result) = parallel_maplines { lc($_) } "file.txt", 4;
+  my (@result) = parallel_maplines { lc($_) } "file.txt", 10;
 
 Three parameters are requied: a coderef, filename, and number of simultanious
 child threads to use.
