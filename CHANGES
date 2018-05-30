@@ -1,4 +1,11 @@
-1.004 - May 29, 2018  ### Released as development trial version only. ###
+1.005 - May 29, 2018
+Joelle Maslak <jmaslak@antelope.net>
+ * From 1.003: Add dolines() which is like forlines() but takes arguments in the
+   same order as maplines/greplines.  Suggested by Chris White.
+ * From 1.003: Minor documentation changes
+ * From 1.004: Make Parallel::WorkUnit an optional module rather than required
+
+1.004 - May 29, 2018
 Joelle Maslak <jmaslak@antelope.net>
  * Make Parallel::WorkUnit an optional module rather than required
 
