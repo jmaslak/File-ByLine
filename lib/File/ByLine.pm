@@ -18,8 +18,6 @@ use autodie;
 use Carp;
 use Fcntl;
 
-use Parallel::WorkUnit 1.117;
-
 =head1 SYNOPSIS
 
   use File::ByLine;
@@ -42,6 +40,7 @@ use Parallel::WorkUnit 1.117;
 
   #
   # Parallelized forlines/dolines routines
+  # (Note: Requires Parallel::WorkUnit to be installed)
   #
   parallel_dolines { foo($_) } "file.txt", 10;
   parallel_forlines "file.txt", 10, { foo($_); };
@@ -135,6 +134,8 @@ sub forlines ($&) {
 
   my (@result) = parallel_dolines { foo($_) } "file.txt", 10;
 
+Requires L<Parallel::WorkUnit> to be installed.
+
 Three parameters are requied: a codref, a filename, and number of simultanious
 child threads to use.
 
@@ -163,6 +164,7 @@ from C<parallel_forlines()>.
 =cut
 
 sub parallel_dolines (&$$) {
+    _require_parallel();
     my ( $code, $file, $procs ) = @_;
 
     if ( !defined($procs) ) {
@@ -186,6 +188,8 @@ sub parallel_dolines (&$$) {
 =func parallel_forlines
 
   my (@result) = parallel_forlines "file.txt", 10, { foo($_) };
+
+Requires L<Parallel::WorkUnit> to be installed.
 
 Three parameters are requied: a filename, a codref, and number of simultanious
 child threads to use.
@@ -215,6 +219,7 @@ from C<parallel_dolines()>.
 =cut
 
 sub parallel_forlines ($$&) {
+    _require_parallel();
     my ( $file, $procs, $code ) = @_;
 
     if ( !defined($procs) ) {
@@ -238,6 +243,8 @@ sub parallel_forlines ($$&) {
 =func greplines
 
   my (@result) = greplines { m/foo/ } "file.txt";
+
+Requires L<Parallel::WorkUnit> to be installed.
 
 This function calls a coderef once for each line in the file, and, based on
 the return value of that coderef, returns only the lines where the coderef
@@ -294,6 +301,7 @@ Otherwise, this function is identical to C<greplines()>.
 =cut
 
 sub parallel_greplines (&$$) {
+    _require_parallel();
     my ( $code, $file, $procs ) = @_;
 
     if ( !defined($procs) ) {
@@ -577,6 +585,33 @@ sub _open_and_seek {
     # We return the file at this position.
     return ( $fh, $end );
 }
+
+sub _require_parallel {
+    if ( scalar(@_) != 0 ) { confess 'invalid call'; }
+
+    require Parallel::WorkUnit
+      or die("You must install Parallel::WorkUnit to use the parallel_* methods");
+
+    if ( $Parallel::WorkUnit::VERSION < 1.117 ) {
+        die( "Parallel::WorkUnit version 1.117 or newer required. You have "
+              . $Parallel::WorkUnit::Version );
+    }
+
+    return;
+}
+
+=head1 SUGGESTED DEPENDENCY
+
+The L<Parallel::WorkUnit> module is a recommended dependency.  It is required
+to use the C<parallel_*> functions - all other functionality works fine without
+it.
+
+Some CPAN clients will automatically try to install recommended dependency, but
+others won't (L<cpan> often, but not always, will; L<cpanm> will not by
+default).  In the cases where it is not automatically installed, you need to
+install L<Parallel::WorkUnit> to get this functionality.
+
+=cut
 
 1;
 

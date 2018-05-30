@@ -15,6 +15,7 @@ use v5.10;
 use Carp;
 
 use Test2::V0;
+use Test2::Require::Module 'Parallel::WorkUnit' => 1.117;
 
 use Fcntl;
 use File::ByLine;

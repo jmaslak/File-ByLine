@@ -1,3 +1,7 @@
+1.004 - May 29, 2018  ### Released as development trial version only. ###
+Joelle Maslak <jmaslak@antelope.net>
+ * Make Parallel::WorkUnit an optional module rather than required
+
 1.003 - May 29, 2018  ### Released as development trial version only. ###
 Joelle Maslak <jmaslak@antelope.net>
  * Add dolines() which is like forlines() but takes arguments in the
