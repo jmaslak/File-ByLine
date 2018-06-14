@@ -26,7 +26,7 @@ use Fcntl;
   # Execute a routine for each line of a file
   #
   dolines { say "Line: $_" } "file.txt";
-  forlines "file.txt", { say "Line: $_" };
+  forlines "file.txt", sub { say "Line: $_" };
 
   #
   # Grep (match) lines of a file
@@ -43,7 +43,7 @@ use Fcntl;
   # (Note: Requires Parallel::WorkUnit to be installed)
   #
   parallel_dolines { foo($_) } "file.txt", 10;
-  parallel_forlines "file.txt", 10, { foo($_); };
+  parallel_forlines "file.txt", 10, sub { foo($_); };
 
   #
   # Parallelized maplines and greplines
@@ -107,7 +107,7 @@ sub dolines (&$) {
 
 =func forlines
 
-  forlines "file.txt", { say "Line: $_" };
+  forlines "file.txt", sub { say "Line: $_" };
   forlines "file.txt", \&func;
 
 This function calls a coderef once for each line in the file.  The file is read
@@ -187,7 +187,7 @@ sub parallel_dolines (&$$) {
 
 =func parallel_forlines
 
-  my (@result) = parallel_forlines "file.txt", 10, { foo($_) };
+  my (@result) = parallel_forlines "file.txt", 10, sub { foo($_) };
 
 Requires L<Parallel::WorkUnit> to be installed.
 
