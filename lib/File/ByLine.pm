@@ -17,6 +17,7 @@ use autodie;
 
 use Carp;
 use Fcntl;
+use Scalar::Util qw(reftype);
 
 =head1 SYNOPSIS
 
@@ -99,10 +100,11 @@ the C<forlines()> syntax.
 
 =cut
 
-sub dolines (&$) {
-    my ( $code, $file ) = @_;
+sub dolines (&$;%) {
+    my ( $code, $file, $args ) = @_;
+    _validate_args($args);
 
-    return _forlines_chunk( $code, $file, 1, 0 );
+    return _forlines_chunk( $code, $file, 1, 0, $args );
 }
 
 =func forlines
@@ -124,10 +126,11 @@ not orthogonal with the C<maplines()>/C<greplines()> routines.
 
 =cut
 
-sub forlines ($&) {
-    my ( $file, $code ) = @_;
+sub forlines ($&;%) {
+    my ( $file, $code, $args ) = @_;
+    _validate_args($args);
 
-    return _forlines_chunk( $code, $file, 1, 0 );
+    return _forlines_chunk( $code, $file, 1, 0, $args );
 }
 
 =func parallel_dolines
@@ -258,10 +261,11 @@ This function returns the lines for which the coderef evaluates as true.
 
 =cut
 
-sub greplines (&$) {
-    my ( $code, $file ) = @_;
+sub greplines (&$;%) {
+    my ( $code, $file, $args ) = @_;
+    _validate_args($args);
 
-    my $lines = _grep_chunk( $code, $file, 1, 0 );
+    my $lines = _grep_chunk( $code, $file, 1, 0, $args );
     return @$lines;
 }
 
@@ -340,10 +344,11 @@ This function returns the lines for which the coderef evaluates as true.
 
 =cut
 
-sub maplines (&$) {
-    my ( $code, $file ) = @_;
+sub maplines (&$;%) {
+    my ( $code, $file, $args ) = @_;
+    _validate_args($args);
 
-    my $mapped_lines = _map_chunk( $code, $file, 1, 0 );
+    my $mapped_lines = _map_chunk( $code, $file, 1, 0, $args );
     return @$mapped_lines;
 }
 
@@ -424,7 +429,8 @@ sub readlines ($) {
 # Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
 # number this invocation is processing.
 sub _forlines_chunk {
-    my ( $code, $file, $procs, $part ) = @_;
+    my ( $code, $file, $procs, $part, $args ) = @_;
+    if ( !defined($args) ) { $args = {}; }
 
     my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
 
@@ -433,7 +439,15 @@ sub _forlines_chunk {
         $lineno++;
 
         chomp;
-        $code->($_);
+
+        # Handle header option
+        if ( ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
+            $args->{header}($_);
+        } elsif ( ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
+            # Do nothing, we're skipping the header.
+        } else {
+            $code->($_);
+        }
 
         # If we're reading multi-parts, do we need to end the read?
         if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
@@ -452,16 +466,25 @@ sub _forlines_chunk {
 # Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
 # number this invocation is processing.
 sub _grep_chunk {
-    my ( $code, $file, $procs, $part ) = @_;
+    my ( $code, $file, $procs, $part, $args ) = @_;
 
     my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
 
     my @lines;
+    my $lineno = 0;
     while (<$fh>) {
+        $lineno++;
+
         chomp;
 
-        if ( $code->($_) ) {
-            push @lines, $_;
+        if ( ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
+            $args->{header}($_);
+        } elsif ( ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
+            # Do nothing, we're skipping the header.
+        } else {
+            if ( $code->($_) ) {
+                push @lines, $_;
+            }
         }
 
         # If we're reading multi-parts, do we need to end the read?
@@ -480,14 +503,24 @@ sub _grep_chunk {
 # Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
 # number this invocation is processing.
 sub _map_chunk {
-    my ( $code, $file, $procs, $part ) = @_;
+    my ( $code, $file, $procs, $part, $args ) = @_;
 
     my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
 
     my @mapped_lines;
+    my $lineno = 0;
     while (<$fh>) {
+        $lineno++;
+
         chomp;
-        push @mapped_lines, $code->($_);
+
+        if ( ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
+            $args->{header}($_);
+        } elsif ( ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
+            # Do nothing, we're skipping the header.
+        } else {
+            push @mapped_lines, $code->($_);
+        }
 
         # If we're reading multi-parts, do we need to end the read?
         if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
@@ -599,6 +632,50 @@ sub _require_parallel {
 
     return;
 }
+
+# Validates the optional arguments
+sub _validate_args {
+    if ( scalar(@_) != 1 ) { confess 'invalid call'; }
+    my $args = shift;
+
+    foreach my $key ( sort keys %$args ) {
+        if ( $key eq 'header' ) {
+            if ( !_codelike( $args->{$key} ) ) {
+                confess("Option 'header' must be a codelike reference");
+            }
+        } elsif ( $key eq 'skip_header' ) {
+            if (exists($args->{header})) {
+                confess("Option 'skip_header' makes no sense with option 'header'");
+            }
+        } else {
+            confess("Unrecognized option '$key'");
+        }
+    }
+
+    return;
+}
+
+# Should we skip the header row?
+sub _args_skip_header {
+    my $args = shift;
+
+    if (!exists($args->{skip_header})) { return; }
+    return scalar $args->{skip_header};
+}
+
+# Validate something is code like
+#
+# Borrowed from Params::Util (written by Adam Kennedy)
+sub _codelike {
+    if ( scalar(@_) != 1 ) { confess 'invalid call' }
+    my $thing = shift;
+
+    if ( reftype($thing) ) { return 1; }
+    if ( blessed($thing) & overload::Method( $thing, '()' ) ) { return 1; }
+
+    return;
+}
+
 
 =head1 SUGGESTED DEPENDENCY
 

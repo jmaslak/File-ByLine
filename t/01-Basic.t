@@ -18,9 +18,22 @@ use Test2::V0;
 
 use File::ByLine;
 
+my $expected_header = 'This is a header.';
 my (@lines) = ( 'Line 1', 'Line 2', 'Line 3', );
 my $lc = 0;
 my @flret;
+
+subtest dolines_inline_bad_option => sub {
+    my $e = dies {
+        dolines { return; } "t/data/3lines-with-header.txt", { badoption => 'foo' };
+    };
+    ok( $e, "Got exception - bad option name" );
+
+    $e = dies {
+        dolines { return; } "t/data/3lines-with-header.txt", { header => 'foo' };
+    };
+    ok( $e, "Got exception - bad header option contents" );
+};
 
 subtest dolines_inline => sub {
     my @result;
@@ -34,11 +47,54 @@ subtest dolines_inline => sub {
         push @result, $line;
 
         is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
-      }
-      "t/data/3lines.txt";
+    }
+    "t/data/3lines.txt";
 
     is( \@result, \@lines,        'Read 3 line file' );
     is( $linecnt, scalar(@lines), 'Return value is proper' );
+};
+
+subtest dolines_inline_with_header => sub {
+    my @result;
+    @flret = ();
+
+    my $header;
+
+    my $lineno  = 0;
+    my $linecnt = dolines {
+        $lineno++;
+        my $line = shift;
+
+        push @result, $line;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+    }
+    "t/data/3lines-with-header.txt", {
+        header => sub { $header = $_ }
+    };
+
+    is( $header,  $expected_header,   'Read header properly' );
+    is( \@result, \@lines,            'Read file with header' );
+    is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
+};
+
+subtest dolines_inline_skip_header => sub {
+    my @result;
+    @flret = ();
+
+    my $lineno  = 0;
+    my $linecnt = dolines {
+        $lineno++;
+        my $line = shift;
+
+        push @result, $line;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+    }
+    "t/data/3lines-with-header.txt", { skip_header => 1 };
+
+    is( \@result, \@lines,            'Read file with header' );
+    is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
 };
 
 subtest forlines_inline => sub {
@@ -57,6 +113,48 @@ subtest forlines_inline => sub {
 
     is( \@result, \@lines,        'Read 3 line file' );
     is( $linecnt, scalar(@lines), 'Return value is proper' );
+};
+
+subtest forlines_inline_with_header => sub {
+    my @result;
+    @flret = ();
+
+    my $header;
+    my $lineno = 0;
+    my $linecnt = forlines "t/data/3lines-with-header.txt", sub {
+        $lineno++;
+        my $line = shift;
+
+        push @result, $line;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+    }, {
+        header => sub {
+            $header = shift;
+        }
+    };
+
+    is( $header,  $expected_header,   'Read header properly' );
+    is( \@result, \@lines,            'Read file with header' );
+    is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
+};
+
+subtest forlines_inline_skip_header => sub {
+    my @result;
+    @flret = ();
+
+    my $lineno = 0;
+    my $linecnt = forlines "t/data/3lines-with-header.txt", sub {
+        $lineno++;
+        my $line = shift;
+
+        push @result, $line;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+    }, { skip_header => 1 };
+
+    is( \@result, \@lines,            'Read file with header' );
+    is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
 };
 
 sub flsub {
@@ -107,6 +205,42 @@ subtest maplines_one_for_one => sub {
     is( \@result, \@lc, 'Read 3 line file' );
 };
 
+subtest maplines_with_header => sub {
+    my $header;
+    my $lineno = 0;
+    my @result = maplines {
+        $lineno++;
+        my $line = shift;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+        return lc($line);
+    }
+    "t/data/3lines-with-header.txt", {
+        header => sub { $header = shift; }
+    };
+
+    my (@lc) = map { lc } @lines;
+
+    is( $header,  $expected_header, 'Read header properly' );
+    is( \@result, \@lc,             'Read 3 line file' );
+};
+
+subtest maplines_skip_header => sub {
+    my $lineno = 0;
+    my @result = maplines {
+        $lineno++;
+        my $line = shift;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+        return lc($line);
+    }
+    "t/data/3lines-with-header.txt", { skip_header => 1 };
+
+    my (@lc) = map { lc } @lines;
+
+    is( \@result, \@lc,             'Read 3 line file' );
+};
+
 subtest maplines_none_and_two => sub {
     my $lineno = 0;
     my @result = maplines {
@@ -142,6 +276,46 @@ subtest greplines => sub {
     my (@expected) = grep { $_ ne 'Line 1' } @lines;
 
     is( \@result, \@expected, 'Read 3 line file' );
+};
+
+subtest greplines_with_header => sub {
+    my $header;
+    my $lineno = 0;
+    my @result = greplines {
+        $lineno++;
+        my $line = shift;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+        if ( $line eq 'Line 1' ) { return; }
+        if ( $line eq 'Line 2' ) { return 1; }
+        if ( $line eq 'Line 3' ) { return 1; }
+    }
+    "t/data/3lines-with-header.txt", {
+        header => sub { $header = shift; }
+    };
+
+    my (@expected) = grep { $_ ne 'Line 1' } @lines;
+
+    is( $header,  $expected_header, 'Read header properly' );
+    is( \@result, \@expected,       'Read 3 line file' );
+};
+
+subtest greplines_skip_header => sub {
+    my $lineno = 0;
+    my @result = greplines {
+        $lineno++;
+        my $line = shift;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+        if ( $line eq 'Line 1' ) { return; }
+        if ( $line eq 'Line 2' ) { return 1; }
+        if ( $line eq 'Line 3' ) { return 1; }
+    }
+    "t/data/3lines-with-header.txt", { skip_header => 1 };
+
+    my (@expected) = grep { $_ ne 'Line 1' } @lines;
+
+    is( \@result, \@expected,       'Read 3 line file' );
 };
 
 subtest readlines => sub {
