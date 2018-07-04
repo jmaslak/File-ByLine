@@ -11,4 +11,8 @@ Todo Items:
     note already, but it's not particularly clear.
   * A write routine wouldn't be a bad thing.
   * A more detailed CONTRIBUTING file
+  * Ability to lock the file before read (particularly for use with the
+    header option)
+  * Abiliity to automically read file (copy to temp file, read, delete
+    temp file)
 
