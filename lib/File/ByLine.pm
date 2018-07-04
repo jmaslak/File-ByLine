@@ -104,6 +104,13 @@ sub dolines (&$;%) {
     my ( $code, $file, $args ) = @_;
     _validate_args($args);
 
+    if ( exists( $args->{header} ) ) {
+        my $header = $_ = _read_header($file);
+        if ( defined($header) ) {
+            $args->{header}($header);
+        }
+    }
+
     return _forlines_chunk( $code, $file, 1, 0, $args );
 }
 
@@ -129,6 +136,13 @@ not orthogonal with the C<maplines()>/C<greplines()> routines.
 sub forlines ($&;%) {
     my ( $file, $code, $args ) = @_;
     _validate_args($args);
+
+    if ( exists( $args->{header} ) ) {
+        my $header = $_ = _read_header($file);
+        if ( defined($header) ) {
+            $args->{header}($header);
+        }
+    }
 
     return _forlines_chunk( $code, $file, 1, 0, $args );
 }
@@ -166,9 +180,9 @@ from C<parallel_forlines()>.
 
 =cut
 
-sub parallel_dolines (&$$) {
+sub parallel_dolines (&$$;%) {
     _require_parallel();
-    my ( $code, $file, $procs ) = @_;
+    my ( $code, $file, $procs, $args ) = @_;
 
     if ( !defined($procs) ) {
         croak("Must include number of child processes");
@@ -176,8 +190,16 @@ sub parallel_dolines (&$$) {
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
+    # We read the header in the parent process
+    if ( exists( $args->{header} ) ) {
+        my $header = $_ = _read_header($file);
+        if ( defined($header) ) {
+            $args->{header}($header);
+        }
+    }
+
     my $wu = Parallel::WorkUnit->new();
-    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0] ); } );
+    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0], $args ); } );
     my (@linecounts) = $wu->waitall();
 
     my $total_lines = 0;
@@ -221,9 +243,9 @@ from C<parallel_dolines()>.
 
 =cut
 
-sub parallel_forlines ($$&) {
+sub parallel_forlines ($$&;%) {
     _require_parallel();
-    my ( $file, $procs, $code ) = @_;
+    my ( $file, $procs, $code, $args ) = @_;
 
     if ( !defined($procs) ) {
         croak("Must include number of child processes");
@@ -231,8 +253,16 @@ sub parallel_forlines ($$&) {
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
+    # We read the header in the parent process
+    if ( exists( $args->{header} ) ) {
+        my $header = $_ = _read_header($file);
+        if ( defined($header) ) {
+            $args->{header}($header);
+        }
+    }
+
     my $wu = Parallel::WorkUnit->new();
-    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0] ); } );
+    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0], $args ); } );
     my (@linecounts) = $wu->waitall();
 
     my $total_lines = 0;
@@ -421,6 +451,18 @@ sub readlines ($) {
     return @lines;
 }
 
+# Internal function to read header line
+sub _read_header {
+    my ($file) = @_;
+
+    my ( $fh, undef ) = _open_and_seek( $file, 1, 0 );
+    my $line = <$fh>;
+    close $fh;
+
+    chomp($line) if defined $line;
+    return $line;
+}
+
 # Internal function to perform a for loop on a single chunk of the file.
 #
 # Procs should be >= 1.  It represents the number of chunks the file
@@ -441,9 +483,9 @@ sub _forlines_chunk {
         chomp;
 
         # Handle header option
-        if ( ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
-            $args->{header}($_);
-        } elsif ( ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
+        if ( ( !$part ) && ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
+            # Do nothing, we're skipping the header.
+        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
             # Do nothing, we're skipping the header.
         } else {
             $code->($_);
@@ -644,7 +686,7 @@ sub _validate_args {
                 confess("Option 'header' must be a codelike reference");
             }
         } elsif ( $key eq 'skip_header' ) {
-            if (exists($args->{header})) {
+            if ( exists( $args->{header} ) ) {
                 confess("Option 'skip_header' makes no sense with option 'header'");
             }
         } else {
@@ -659,7 +701,7 @@ sub _validate_args {
 sub _args_skip_header {
     my $args = shift;
 
-    if (!exists($args->{skip_header})) { return; }
+    if ( !exists( $args->{skip_header} ) ) { return; }
     return scalar $args->{skip_header};
 }
 
@@ -675,7 +717,6 @@ sub _codelike {
 
     return;
 }
-
 
 =head1 SUGGESTED DEPENDENCY
 
