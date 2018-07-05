@@ -507,6 +507,8 @@ process.  Specifying C<2> or greater will use multiple processes to operate
 on the file (see documentation for the parallel_* functions described above
 for more details).
 
+=head2 METHODS
+
 =head3 do
 
   $byline->do( sub { ... }, "file.txt" );
