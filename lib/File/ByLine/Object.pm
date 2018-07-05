@@ -19,6 +19,30 @@ use Carp;
 use Fcntl;
 use Scalar::Util qw(reftype);
 
+=head1 SEE File::ByLine
+
+Please consult File::ByLine for user-level documentation.  This interface is
+documented there.
+
+=cut
+
+#
+# Attribute Accessor - file
+#
+# The file we operate on (most methods accept a file parameter - this is
+# only used if one is not set)
+sub file {
+    my ($self) = shift;
+    if ( scalar(@_) == 0 ) {
+        return $self->{file};
+    } elsif ( scalar(@_) == 1 ) {
+        my $file = shift;
+        return $self->{file} = $file;
+    } else {
+        confess("Invalid call");
+    }
+}
+
 #
 # Attribute Accessor - processes
 #
@@ -106,7 +130,11 @@ sub new {
 # Executes the provided code on every line.
 #
 sub do {
+    if (scalar(@_) < 2) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
+
+    if (!defined($file)) { $file = $self->{file} };
+    if (!defined($file)) { confess "Must provide filename"; }
 
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header($file);
@@ -137,7 +165,11 @@ sub do {
 #
 # Finds and returns matching lines
 sub grep {
+    if (scalar(@_) < 2) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
+
+    if (!defined($file)) { $file = $self->{file} };
+    if (!defined($file)) { confess "Must provide filename"; }
 
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header($file);
@@ -166,7 +198,11 @@ sub grep {
 #
 # Applies function to each entry and returns that result
 sub map {
+    if (scalar(@_) < 2) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
+
+    if (!defined($file)) { $file = $self->{file} };
+    if (!defined($file)) { confess "Must provide filename"; }
 
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header($file);
@@ -196,7 +232,11 @@ sub map {
 # Returns all lines in the file
 # XXX: We should use header_handler & header_skip but don't
 sub lines {
+    if (scalar(@_) < 1) { confess "Invalid call"; }
     my ($self, $file) = @_;
+
+    if (!defined($file)) { $file = $self->{file} };
+    if (!defined($file)) { confess "Must provide filename"; }
 
     my @lines;
 
