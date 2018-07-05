@@ -1,7 +1,8 @@
 {{$NEXT}}
  Joelle Maslak <jmaslak@antelope.net>
- * Minor documentation (examples) update
- * Added option to treat header differently
+ * TRIAL/DEV RELEASE ONLY
+ * OO Interface
+ * Provide mechanism to handle header lines
  * Add code of conduct
  * Convert to new Dist::Zilla plugin
 

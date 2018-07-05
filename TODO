@@ -1,6 +1,5 @@
 Todo Items:
 
-  * Document OO mode
   * Constructor should accept parameters
   * Better checking of parameters for OO mode
   * UTF-8 and other encoding support
