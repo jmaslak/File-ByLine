@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# Yes, we want to make sure things work in taint mode
 
 #
 # Copyright (C) 2018 Joelle Maslak
