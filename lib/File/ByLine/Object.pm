@@ -233,21 +233,29 @@ sub map {
 # Method - lines
 #
 # Returns all lines in the file
-# XXX: We should use header_handler & header_skip but don't
 sub lines {
     if (scalar(@_) < 1) { confess "Invalid call"; }
     my ($self, $file) = @_;
 
     if (!defined($file)) { $file = $self->{file} };
     if (!defined($file)) { confess "Must provide filename"; }
-
+    
     my @lines;
 
     open my $fh, '<', $file or die($!);
 
+    my $lineno;
     while (<$fh>) {
+        $lineno++;
         chomp;
-        push @lines, $_;
+
+        if ( ($lineno == 1) && defined( $self->{header_handler} ) ) {
+            $self->{header_handler}($_);
+        } elsif ( ($lineno == 1) && $self->{header_skip} ) {
+            # Do nothing;
+        } else {
+            push @lines, $_;
+        }
     }
 
     close $fh;

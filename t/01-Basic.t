@@ -482,5 +482,31 @@ subtest readlines_object_with_filename_override => sub {
     is( \@result, \@lines, 'Read 3 line file' );
 };
 
+subtest readlines_object_with_header_skip => sub {
+    my $lineno = 0;
+
+    my $byline = File::ByLine->new();
+    $byline->file("t/data/3lines-with-header.txt");
+    $byline->header_skip(1);
+
+    my (@result) = $byline->lines();
+
+    is( \@result, \@lines, 'Read 3 line file' );
+};
+
+subtest readlines_object_with_header_handler => sub {
+    my $lineno = 0;
+
+    my $header;
+    my $byline = File::ByLine->new();
+    $byline->file("t/data/3lines-with-header.txt");
+    $byline->header_handler( sub { $header = $_ } );
+
+    my (@result) = $byline->lines();
+
+    is( \@result, \@lines,          'Read 3 line file' );
+    is( $header,  $expected_header, 'Read header properly' );
+};
+
 done_testing();
 
