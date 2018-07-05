@@ -14,4 +14,6 @@ Todo Items:
     header option)
   * Abiliity to automically read file (copy to temp file, read, delete
     temp file)
+  * The header_handler function and header_skip should handle multi-line
+    headers.
 
