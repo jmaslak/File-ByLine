@@ -239,7 +239,7 @@ sub lines {
 
     if (!defined($file)) { $file = $self->{file} };
     if (!defined($file)) { confess "Must provide filename"; }
-    
+
     my @lines;
 
     open my $fh, '<', $file or die($!);
