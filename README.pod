@@ -8,45 +8,86 @@ File::ByLine - Line-by-line file access loops
 
 =head1 VERSION
 
-version 1.181840
+version 1.181860
 
 =head1 SYNOPSIS
 
   use File::ByLine;
 
   #
-  # Execute a routine for each line of a file
+  # Procedural Interface (Simple!)
   #
+
+  # Execute a routine for each line of a file
   dolines { say "Line: $_" } "file.txt";
   forlines "file.txt", sub { say "Line: $_" };
 
-  #
   # Grep (match) lines of a file
-  #
   my (@result) = greplines { m/foo/ } "file.txt";
 
-  #
   # Apply a function to each line and return result
-  #
   my (@result) = maplines { lc($_) } "file.txt";
 
-  #
   # Parallelized forlines/dolines routines
   # (Note: Requires Parallel::WorkUnit to be installed)
-  #
   parallel_dolines { foo($_) } "file.txt", 10;
   parallel_forlines "file.txt", 10, sub { foo($_); };
 
-  #
   # Parallelized maplines and greplines
-  #
   my (@result) = parallel_greplines { m/foo/ } "file.txt", 10;
   my (@result) = parallel_maplines  { lc($_) } "file.txt", 10;
 
-  #
   # Read an entire file, split into lines
-  #
   my (@result) = readlines "file.txt";
+
+
+  #
+  # Functional Interface
+  #
+
+  # Execute a routine for each line of a file
+  my $byline = File::ByLine->new();
+  $byline->do( sub { say "Line: $_" }, "file.txt");
+
+  # Grep (match) lines of a file
+  my $byline = File::ByLine->new();
+  my (@result) = $byline->grep( sub { m/foo/ }, "file.txt");
+
+  # Apply a function to each line and return result
+  my $byline = File::ByLine->new();
+  my (@result) = $byline->map( sub { lc($_) }, "file.txt");
+
+  # Parallelized routines
+  # (Note: Requires Parallel::WorkUnit to be installed)
+  my $byline = File::ByLine->new();
+  $byline->processes(10);
+  $byline->do( sub { foo($_) }, "file.txt");
+  my (@grep_result) = $byline->grep( sub { m/foo/ }, "file.txt");
+  my (@map_result)  = $byline->map( sub { lc($_) }, "file.txt");
+
+  # Skip the header line
+  my $byline = File::ByLine->new();
+  $byline->skip_header(1);
+  $byline->do( sub { foo($_) }, "file.txt");
+  my (@grep_result) = $byline->grep( sub { m/foo/ }, "file.txt");
+  my (@map_result)  = $byline->map( sub { lc($_) }, "file.txt");
+
+  # Process the header line
+  my $byline = File::ByLine->new();
+  $byline->header_handler( sub { say $_; } );
+  $byline->do( sub { foo($_) }, "file.txt");
+  my (@grep_result) = $byline->grep( sub { m/foo/ }, "file.txt");
+  my (@map_result)  = $byline->map( sub { lc($_) }, "file.txt");
+
+  # Read an entire file, split into lines
+  my (@result) = readlines "file.txt";
+
+  # Alternative way of specifying filenames
+  my $byline = File::ByLine->new();
+  $byline->file("file.txt")
+  $byline->do( sub { foo($_) } );
+  my (@grep_result) = $byline->grep( sub { m/foo/ } );
+  my (@map_result)  = $byline->map( sub { lc($_) } );
 
 =head1 DESCRIPTION
 
@@ -259,6 +300,124 @@ Otherwise, this function is identical to C<maplines()>.
 
 This function simply returns an array of lines (without newlines) read from
 a file.
+
+=head1 OBJECT ORIENTED INTERFACE
+
+The object oriented interface was implemented in version 1.181860.
+
+=head2 new
+
+  my $byline = File::ByLine->new();
+
+Constructs a new object, suitable for the object oriented calls below.
+
+=head2 ATTRIBUTES
+
+=head3 file
+
+  my $current_file = $byline->file();
+  $byline->file("abc.txt");
+
+Gets and sets the default filename used by the methods in the object oriented
+interface.  The default value is C<undef> which indicates that no default
+filename is provided.
+
+=head3 header_skip
+
+  $byline->header_skip(1);
+
+Gets and sets whether the object oriented methods will skip the first line
+in the file (which you might want to do for a line that is a header).  This
+defaults to false.  Any true value will cause the header line to be skipped.
+
+You cannot set this to true while a L<header_handler> value is set.
+
+=head3 header_handler
+
+  $byline->header_handler( sub { ... } );
+
+Specifies code that should be executed on the header row of the input file.
+This defaults to C<undef>, which indicates no header handler is specified.
+When a header handler is specified, the first row of the file is sent to this
+handler, and is not sent to the code provided to the various do/grep/map/lines
+methods in the object oriented interface.
+
+The code is called with one parameter, the header line.  The header line is
+also stored in C<$_>.
+
+When set, this is always executed in the parent process, not in the child
+processes that are spawned (in the case of L<processes> being greater than
+one).
+
+You cannot set this to true while a L<header_skip> value is set.
+
+=head3 processes
+
+  my $procs = $byline->processes();
+  $byline->processes(10);
+
+This gets and sets the degree of parallelism most methods will use.  The
+default degree is C<1>, which indicates all tasks should only use a single
+process.  Specifying C<2> or greater will use multiple processes to operate
+on the file (see documentation for the parallel_* functions described above
+for more details).
+
+=head2 METHODS
+
+=head3 do
+
+  $byline->do( sub { ... }, "file.txt" );
+
+This performs the L<dolines> functionality, calling the code provided.  If
+the filename is not provided, the L<file> attribute is used for this.  See the
+L<dolines> and L<parallel_dolines> functions for more information on how this
+functions.
+
+The code is called with one parameter, the header line.  The header line is
+also stored in C<$_>.
+
+=head3 grep
+
+  my (@output) = $byline->grep( sub { ... }, "file.txt" );
+
+This performs the L<greplines> functionality, calling the code provided.  If
+the filename is not provided, the L<file> attribute is used for this.  See the
+L<greplines> and L<parallel_greplines> functions for more information on how
+this functions.
+
+The code is called with one parameter, the header line.  The header line is
+also stored in C<$_>.
+
+The output is a list of all input lines where the code reference produces a
+true result.
+
+=head3 map
+
+  my (@output) = $byline->map( sub { ... }, "file.txt" );
+
+This performs the L<maplines> functionality, calling the code provided.  If
+the filename is not provided, the L<file> attribute is used for this.  See the
+L<maplines> and L<parallel_maplines> functions for more information on how
+this functions.
+
+The code is called with one parameter, the header line.  The header line is
+also stored in C<$_>.
+
+The output is the list produced by calling the passed-in code repeatively
+for each line of input.
+
+=head3 lines
+
+  my (@output) = $byline->lines( "file.txt" );
+
+This performs the L<readlines> functionality.  If the filename is not provided,
+the L<file> attribute is used for this.  See the L<readlines> function for more
+information on how this functions.
+
+The output is a list of all input lines.
+
+Note that this function is unaffected by the value of the L<processes>
+attribute - it always executes in the parent process.
 
 =head1 SUGGESTED DEPENDENCY
 
