@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 # Yes, we want to make sure things work in taint mode
 
 #
