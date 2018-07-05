@@ -17,7 +17,11 @@ use autodie;
 
 use Carp;
 use Fcntl;
+use File::ByLine::Object;
 use Scalar::Util qw(reftype);
+
+# Object with default options
+our $OBJ = File::ByLine::Object->new();
 
 =head1 SYNOPSIS
 
@@ -100,18 +104,10 @@ the C<forlines()> syntax.
 
 =cut
 
-sub dolines (&$;%) {
-    my ( $code, $file, $args ) = @_;
-    _validate_args($args);
+sub dolines (&$) {
+    my ( $code, $file ) = @_;
 
-    if ( exists( $args->{header} ) ) {
-        my $header = $_ = _read_header($file);
-        if ( defined($header) ) {
-            $args->{header}($header);
-        }
-    }
-
-    return _forlines_chunk( $code, $file, 1, 0, $args );
+    return $OBJ->do($code, $file);
 }
 
 =func forlines
@@ -133,18 +129,10 @@ not orthogonal with the C<maplines()>/C<greplines()> routines.
 
 =cut
 
-sub forlines ($&;%) {
-    my ( $file, $code, $args ) = @_;
-    _validate_args($args);
+sub forlines ($&) {
+    my ( $file, $code ) = @_;
 
-    if ( exists( $args->{header} ) ) {
-        my $header = $_ = _read_header($file);
-        if ( defined($header) ) {
-            $args->{header}($header);
-        }
-    }
-
-    return _forlines_chunk( $code, $file, 1, 0, $args );
+    return $OBJ->do($code, $file);
 }
 
 =func parallel_dolines
@@ -180,9 +168,8 @@ from C<parallel_forlines()>.
 
 =cut
 
-sub parallel_dolines (&$$;%) {
-    _require_parallel();
-    my ( $code, $file, $procs, $args ) = @_;
+sub parallel_dolines (&$$) {
+    my ( $code, $file, $procs ) = @_;
 
     if ( !defined($procs) ) {
         croak("Must include number of child processes");
@@ -190,24 +177,10 @@ sub parallel_dolines (&$$;%) {
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
-    # We read the header in the parent process
-    if ( exists( $args->{header} ) ) {
-        my $header = $_ = _read_header($file);
-        if ( defined($header) ) {
-            $args->{header}($header);
-        }
-    }
+    my $byline = File::ByLine::Object->new();
+    $byline->processes($procs);
 
-    my $wu = Parallel::WorkUnit->new();
-    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0], $args ); } );
-    my (@linecounts) = $wu->waitall();
-
-    my $total_lines = 0;
-    foreach my $cnt (@linecounts) {
-        $total_lines += $cnt;
-    }
-
-    return $total_lines;
+    return $byline->do($code, $file);
 }
 
 =func parallel_forlines
@@ -243,9 +216,8 @@ from C<parallel_dolines()>.
 
 =cut
 
-sub parallel_forlines ($$&;%) {
-    _require_parallel();
-    my ( $file, $procs, $code, $args ) = @_;
+sub parallel_forlines ($$&) {
+    my ( $file, $procs, $code ) = @_;
 
     if ( !defined($procs) ) {
         croak("Must include number of child processes");
@@ -253,24 +225,10 @@ sub parallel_forlines ($$&;%) {
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
-    # We read the header in the parent process
-    if ( exists( $args->{header} ) ) {
-        my $header = $_ = _read_header($file);
-        if ( defined($header) ) {
-            $args->{header}($header);
-        }
-    }
+    my $byline = File::ByLine::Object->new();
+    $byline->processes($procs);
 
-    my $wu = Parallel::WorkUnit->new();
-    $wu->asyncs( $procs, sub { return _forlines_chunk( $code, $file, $procs, $_[0], $args ); } );
-    my (@linecounts) = $wu->waitall();
-
-    my $total_lines = 0;
-    foreach my $cnt (@linecounts) {
-        $total_lines += $cnt;
-    }
-
-    return $total_lines;
+    return $byline->do($code, $file);
 }
 
 =func greplines
@@ -291,12 +249,10 @@ This function returns the lines for which the coderef evaluates as true.
 
 =cut
 
-sub greplines (&$;%) {
-    my ( $code, $file, $args ) = @_;
-    _validate_args($args);
+sub greplines (&$) {
+    my ( $code, $file ) = @_;
 
-    my $lines = _grep_chunk( $code, $file, 1, 0, $args );
-    return @$lines;
+    return $OBJ->grep($code, $file);
 }
 
 =func parallel_greplines
@@ -335,7 +291,6 @@ Otherwise, this function is identical to C<greplines()>.
 =cut
 
 sub parallel_greplines (&$$) {
-    _require_parallel();
     my ( $code, $file, $procs ) = @_;
 
     if ( !defined($procs) ) {
@@ -344,9 +299,10 @@ sub parallel_greplines (&$$) {
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
-    my $wu = Parallel::WorkUnit->new();
-    $wu->asyncs( $procs, sub { return _grep_chunk( $code, $file, $procs, $_[0] ); } );
-    return map { @$_ } $wu->waitall();
+    my $byline = File::ByLine::Object->new();
+    $byline->processes($procs);
+
+    return $byline->grep($code, $file);
 }
 
 =func maplines
@@ -374,12 +330,10 @@ This function returns the lines for which the coderef evaluates as true.
 
 =cut
 
-sub maplines (&$;%) {
-    my ( $code, $file, $args ) = @_;
-    _validate_args($args);
+sub maplines (&$) {
+    my ( $code, $file ) = @_;
 
-    my $mapped_lines = _map_chunk( $code, $file, 1, 0, $args );
-    return @$mapped_lines;
+    return $OBJ->map($code, $file);
 }
 
 =func parallel_maplines
@@ -420,9 +374,10 @@ sub parallel_maplines (&$$) {
 
     if ( $procs <= 0 ) { croak("Number of processes must be >= 1"); }
 
-    my $wu = Parallel::WorkUnit->new();
-    $wu->asyncs( $procs, sub { return _map_chunk( $code, $file, $procs, $_[0] ); } );
-    return map { @$_ } $wu->waitall();
+    my $byline = File::ByLine::Object->new();
+    $byline->processes($procs);
+
+    return $byline->map($code, $file);
 }
 
 =func readlines
@@ -437,285 +392,17 @@ a file.
 sub readlines ($) {
     my ($file) = @_;
 
-    my @lines;
-
-    open my $fh, '<', $file or die($!);
-
-    while (<$fh>) {
-        chomp;
-        push @lines, $_;
-    }
-
-    close $fh;
-
-    return @lines;
+    return $OBJ->lines($file);
 }
 
-# Internal function to read header line
-sub _read_header {
-    my ($file) = @_;
-
-    my ( $fh, undef ) = _open_and_seek( $file, 1, 0 );
-    my $line = <$fh>;
-    close $fh;
-
-    chomp($line) if defined $line;
-    return $line;
-}
-
-# Internal function to perform a for loop on a single chunk of the file.
 #
-# Procs should be >= 1.  It represents the number of chunks the file
-# has.
+# Object Oriented Interface
 #
-# Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
-# number this invocation is processing.
-sub _forlines_chunk {
-    my ( $code, $file, $procs, $part, $args ) = @_;
-    if ( !defined($args) ) { $args = {}; }
 
-    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
+sub new {
+    shift; # Remove the first parameter because we want to specify the class.
 
-    my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
-
-        chomp;
-
-        # Handle header option
-        if ( ( !$part ) && ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
-            # Do nothing, we're skipping the header.
-        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
-            # Do nothing, we're skipping the header.
-        } else {
-            $code->($_);
-        }
-
-        # If we're reading multi-parts, do we need to end the read?
-        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
-    }
-
-    close $fh;
-
-    return $lineno;
-}
-
-# Internal function to perform a grep on a single chunk of the file.
-#
-# Procs should be >= 1.  It represents the number of chunks the file
-# has.
-#
-# Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
-# number this invocation is processing.
-sub _grep_chunk {
-    my ( $code, $file, $procs, $part, $args ) = @_;
-
-    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
-
-    my @lines;
-    my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
-
-        chomp;
-
-        if ( ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
-            $args->{header}($_);
-        } elsif ( ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
-            # Do nothing, we're skipping the header.
-        } else {
-            if ( $code->($_) ) {
-                push @lines, $_;
-            }
-        }
-
-        # If we're reading multi-parts, do we need to end the read?
-        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
-    }
-
-    close $fh;
-    return \@lines;
-}
-
-# Internal function to perform a map on a single chunk of the file.
-#
-# Procs should be >= 1.  It represents the number of chunks the file
-# has.
-#
-# Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
-# number this invocation is processing.
-sub _map_chunk {
-    my ( $code, $file, $procs, $part, $args ) = @_;
-
-    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
-
-    my @mapped_lines;
-    my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
-
-        chomp;
-
-        if ( ( $lineno == 1 ) && ( exists( $args->{header} ) ) ) {
-            $args->{header}($_);
-        } elsif ( ( $lineno == 1 ) && ( _args_skip_header($args) ) ) {
-            # Do nothing, we're skipping the header.
-        } else {
-            push @mapped_lines, $code->($_);
-        }
-
-        # If we're reading multi-parts, do we need to end the read?
-        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
-    }
-
-    close $fh;
-    return \@mapped_lines;
-}
-
-# Internal function to facilitate reading a file in chunks.
-#
-# If parts == 1, this basically just opens the file (and returns -1 for
-# end, to be discussed later)
-#
-# If parts > 1, then this divides the file (by byte count) into that
-# many parts, and then seeks to the first character at the start of a
-# new line in that part (lines are attributed to the part in which they
-# end).
-#
-# It also returns an end position - no line starting *after* the end
-# position is in the relevant chunk.
-#
-# part_number is zero indexed.
-#
-# For part_number >= 1, the first valid character is actually start + 1
-# If a line actually starts at the first position, we treat it as
-# part of the previous chunk.
-#
-# If no lines would start in a given chunk, this seeks to the end of the
-# file (so it gives an EOF on the first read)
-sub _open_and_seek {
-    my ( $file, $parts, $part_number ) = @_;
-
-    if ( !defined($parts) )       { $parts       = 1; }
-    if ( !defined($part_number) ) { $part_number = 0; }
-
-    if ( $parts <= $part_number ) {
-        confess("Part Number must be greater than number of parts");
-    }
-    if ( $parts <= 0 ) {
-        confess("Number of parts must be > 0");
-    }
-    if ( $part_number < 0 ) {
-        confess("Part Number must be greater or equal to 0");
-    }
-
-    open my $fh, '<', $file or die($!);
-
-    # If this is a single part request, we are done here.
-    # We use -1, not size, because it's possible the read is from a
-    # terminal or pipe or something else that can grow.
-    if ( $parts == 0 ) {
-        return ( $fh, -1 );
-    }
-
-    # This is a request for part of a multi-part document.  How big is
-    # it?
-    seek( $fh, 0, Fcntl::SEEK_END );
-    my $size = tell($fh);
-
-    # Special case - more threads than needed.
-    if ( $parts > $size ) {
-        if ( $part_number > $size ) { return ( $fh, -1 ) }
-
-        # We want each part to be one byte, basically.  Not fractiosn of
-        # a byte.
-        $parts = $size;
-    }
-
-    # Figure out start and end size
-    my $start = int( $part_number * ( $size / $parts ) );
-    my $end = int( $start + ( $size / $parts ) );
-
-    # Seek to start position
-    seek( $fh, $start, Fcntl::SEEK_SET );
-
-    # Read and discard junk to the end of line.
-    # But ONLY for parts other than the first one.  We basically assume
-    # all parts > 1 are starting mid-line.
-    if ( $part_number > 0 ) {
-        scalar(<$fh>);
-    }
-
-    # Special case - allow file to have grown since first read to end
-    if ( ( $parts - 1 ) == $part_number ) {
-        return ( $fh, -1 );
-    }
-
-    # Another special case...  If we're already past the end, seek to
-    # the end.
-    if ( tell($fh) > $end ) {
-        seek( $fh, 0, Fcntl::SEEK_END );
-    }
-
-    # We return the file at this position.
-    return ( $fh, $end );
-}
-
-sub _require_parallel {
-    if ( scalar(@_) != 0 ) { confess 'invalid call'; }
-
-    require Parallel::WorkUnit
-      or die("You must install Parallel::WorkUnit to use the parallel_* methods");
-
-    if ( $Parallel::WorkUnit::VERSION < 1.117 ) {
-        die( "Parallel::WorkUnit version 1.117 or newer required. You have "
-              . $Parallel::WorkUnit::Version );
-    }
-
-    return;
-}
-
-# Validates the optional arguments
-sub _validate_args {
-    if ( scalar(@_) != 1 ) { confess 'invalid call'; }
-    my $args = shift;
-
-    foreach my $key ( sort keys %$args ) {
-        if ( $key eq 'header' ) {
-            if ( !_codelike( $args->{$key} ) ) {
-                confess("Option 'header' must be a codelike reference");
-            }
-        } elsif ( $key eq 'skip_header' ) {
-            if ( exists( $args->{header} ) ) {
-                confess("Option 'skip_header' makes no sense with option 'header'");
-            }
-        } else {
-            confess("Unrecognized option '$key'");
-        }
-    }
-
-    return;
-}
-
-# Should we skip the header row?
-sub _args_skip_header {
-    my $args = shift;
-
-    if ( !exists( $args->{skip_header} ) ) { return; }
-    return scalar $args->{skip_header};
-}
-
-# Validate something is code like
-#
-# Borrowed from Params::Util (written by Adam Kennedy)
-sub _codelike {
-    if ( scalar(@_) != 1 ) { confess 'invalid call' }
-    my $thing = shift;
-
-    if ( reftype($thing) ) { return 1; }
-    if ( blessed($thing) & overload::Method( $thing, '()' ) ) { return 1; }
-
-    return;
+    return File::ByLine::Object->new(@_);
 }
 
 =head1 SUGGESTED DEPENDENCY

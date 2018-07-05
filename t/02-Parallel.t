@@ -112,21 +112,26 @@ subtest parallel_dolines_with_header => sub {
     #
 
     my $header;
+    my $byline = File::ByLine->new();
+    $byline->header_handler( sub { $header = $_ } );
+    $byline->processes(4);
 
-    my $linecnt = parallel_dolines {
-        my $line = shift;
+    my $linecnt = $byline->do(
+        sub {
+            my $line = shift;
 
-        if ( $line eq 'Line 1' ) {
-            print $fh1 "$line\n";
-        } elsif ( $line eq 'Line 2' ) {
-            print $fh2 "$line\n";
-        } elsif ( $line eq 'Line 3' ) {
-            print $fh3 "$line\n";
-        } else {
-            print $fh4 "$line\n";
-        }
-    }
-    "t/data/3lines-with-header.txt", 4, { header => sub { $header = $_ }, };
+            if ( $line eq 'Line 1' ) {
+                print $fh1 "$line\n";
+            } elsif ( $line eq 'Line 2' ) {
+                print $fh2 "$line\n";
+            } elsif ( $line eq 'Line 3' ) {
+                print $fh3 "$line\n";
+            } else {
+                print $fh4 "$line\n";
+            }
+        },
+        "t/data/3lines-with-header.txt"
+    );
 
     seek( $fh1, 0, Fcntl::SEEK_SET );
     seek( $fh2, 0, Fcntl::SEEK_SET );
@@ -171,20 +176,26 @@ subtest parallel_dolines_skip_header => sub {
     # Make sre that we call the code for each line
     #
 
-    my $linecnt = parallel_dolines {
-        my $line = shift;
+    my $byline = File::ByLine->new();
+    $byline->header_skip(1);
+    $byline->processes(4);
 
-        if ( $line eq 'Line 1' ) {
-            print $fh1 "$line\n";
-        } elsif ( $line eq 'Line 2' ) {
-            print $fh2 "$line\n";
-        } elsif ( $line eq 'Line 3' ) {
-            print $fh3 "$line\n";
-        } else {
-            print $fh4 "$line\n";
-        }
-    }
-    "t/data/3lines-with-header.txt", 4, { skip_header => 1 };
+    my $linecnt = $byline->do(
+        sub {
+            my $line = shift;
+
+            if ( $line eq 'Line 1' ) {
+                print $fh1 "$line\n";
+            } elsif ( $line eq 'Line 2' ) {
+                print $fh2 "$line\n";
+            } elsif ( $line eq 'Line 3' ) {
+                print $fh3 "$line\n";
+            } else {
+                print $fh4 "$line\n";
+            }
+        },
+        "t/data/3lines-with-header.txt"
+    );
 
     seek( $fh1, 0, Fcntl::SEEK_SET );
     seek( $fh2, 0, Fcntl::SEEK_SET );
@@ -279,125 +290,6 @@ subtest parallel_forlines => sub {
     ok( !-f $fn1, "FN1 Deleted" );
     ok( !-f $fn2, "FN2 Deleted" );
     ok( !-f $fn3, "FN3 Deleted" );
-};
-
-subtest parallel_forlines_with_header => sub {
-    my ( $fh1, $fn1 ) = tempfile();
-    my ( $fh2, $fn2 ) = tempfile();
-    my ( $fh3, $fn3 ) = tempfile();
-    my ( $fh4, $fn4 ) = tempfile();
-
-    #
-    # Make sre that we call the code for each line
-    #
-
-    my $header;
-
-    my $linecnt = parallel_forlines "t/data/3lines-with-header.txt", 4, sub {
-        my $line = shift;
-
-        if ( $line eq 'Line 1' ) {
-            print $fh1 "$line\n";
-        } elsif ( $line eq 'Line 2' ) {
-            print $fh2 "$line\n";
-        } elsif ( $line eq 'Line 3' ) {
-            print $fh3 "$line\n";
-        } else {
-            print $fh4 "$line\n";
-        }
-    }, {
-        header => sub {
-            $header = $_;
-        }
-    };
-
-    seek( $fh1, 0, Fcntl::SEEK_SET );
-    seek( $fh2, 0, Fcntl::SEEK_SET );
-    seek( $fh3, 0, Fcntl::SEEK_SET );
-    seek( $fh4, 0, Fcntl::SEEK_SET );
-
-    my $l1 = <$fh1>;
-    my $l2 = <$fh2>;
-    my $l3 = <$fh3>;
-    my $l4 = <$fh4>;
-
-    close $fh1;
-    close $fh2;
-    close $fh3;
-    close $fh4;
-
-    chomp($l1) if defined $l1;
-    chomp($l2) if defined $l2;
-    chomp($l3) if defined $l3;
-    chomp($l4) if defined $l4;
-
-    is( $header,  $expected_header,   'Read header properly' );
-    is( $l1,      $lines[0],          'Line 0 correct' );
-    is( $l2,      $lines[1],          'Line 1 correct' );
-    is( $l3,      $lines[2],          'Line 2 correct' );
-    is( $l4,      undef,              'No unexpected text' );
-    is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
-
-    unlink $fn1;
-    unlink $fn2;
-    unlink $fn3;
-    unlink $fn4;
-};
-
-subtest parallel_forlines_skip_header => sub {
-    my ( $fh1, $fn1 ) = tempfile();
-    my ( $fh2, $fn2 ) = tempfile();
-    my ( $fh3, $fn3 ) = tempfile();
-    my ( $fh4, $fn4 ) = tempfile();
-
-    #
-    # Make sre that we call the code for each line
-    #
-
-    my $linecnt = parallel_forlines "t/data/3lines-with-header.txt", 4, sub {
-        my $line = shift;
-
-        if ( $line eq 'Line 1' ) {
-            print $fh1 "$line\n";
-        } elsif ( $line eq 'Line 2' ) {
-            print $fh2 "$line\n";
-        } elsif ( $line eq 'Line 3' ) {
-            print $fh3 "$line\n";
-        } else {
-            print $fh4 "$line\n";
-        }
-    }, { skip_header => 1 };
-
-    seek( $fh1, 0, Fcntl::SEEK_SET );
-    seek( $fh2, 0, Fcntl::SEEK_SET );
-    seek( $fh3, 0, Fcntl::SEEK_SET );
-    seek( $fh4, 0, Fcntl::SEEK_SET );
-
-    my $l1 = <$fh1>;
-    my $l2 = <$fh2>;
-    my $l3 = <$fh3>;
-    my $l4 = <$fh4>;
-
-    close $fh1;
-    close $fh2;
-    close $fh3;
-    close $fh4;
-
-    chomp($l1) if defined $l1;
-    chomp($l2) if defined $l2;
-    chomp($l3) if defined $l3;
-    chomp($l4) if defined $l4;
-
-    is( $l1,      $lines[0],          'Line 0 correct' );
-    is( $l2,      $lines[1],          'Line 1 correct' );
-    is( $l3,      $lines[2],          'Line 2 correct' );
-    is( $l4,      undef,              'No unexpected text' );
-    is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
-
-    unlink $fn1;
-    unlink $fn2;
-    unlink $fn3;
-    unlink $fn4;
 };
 
 sub flsub {
