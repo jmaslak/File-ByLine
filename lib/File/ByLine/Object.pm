@@ -19,6 +19,9 @@ use Carp;
 use Fcntl;
 use Scalar::Util qw(reftype);
 
+# We do this intentionally:
+## no critic (Subroutines::ProhibitBuiltinHomonyms)
+
 =head1 SEE File::ByLine
 
 Please consult File::ByLine for user-level documentation.  This interface is
