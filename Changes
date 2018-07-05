@@ -1,12 +1,16 @@
 {{$NEXT}}
 
-1.181860  2018-07-04 21:24:57-06:00 America/Denver (TRIAL RELEASE)
+1.181861  2018-07-05 07:42:19-06:00 America/Denver
  Joelle Maslak <jmaslak@antelope.net>
- * TRIAL/DEV RELEASE ONLY
  * OO Interface
  * Provide mechanism to handle header lines
  * Add code of conduct
  * Convert to new Dist::Zilla plugin
+
+1.181860  2018-07-04 21:24:57-06:00 America/Denver (TRIAL RELEASE)
+ Joelle Maslak <jmaslak@antelope.net>
+ * TRIAL/DEV RELEASE ONLY
+ * Changes that became 1.181871
 
 1.005 - May 29, 2018
  Joelle Maslak <jmaslak@antelope.net>

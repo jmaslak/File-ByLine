@@ -8,7 +8,7 @@ File::ByLine - Line-by-line file access loops
 
 =head1 VERSION
 
-version 1.181860
+version 1.181861
 
 =head1 SYNOPSIS
 
@@ -330,7 +330,7 @@ Gets and sets whether the object oriented methods will skip the first line
 in the file (which you might want to do for a line that is a header).  This
 defaults to false.  Any true value will cause the header line to be skipped.
 
-You cannot set this to true while a L<header_handler> value is set.
+You cannot set this to true while a C<header_handler> value is set.
 
 =head3 header_handler
 
@@ -346,10 +346,10 @@ The code is called with one parameter, the header line.  The header line is
 also stored in C<$_>.
 
 When set, this is always executed in the parent process, not in the child
-processes that are spawned (in the case of L<processes> being greater than
+processes that are spawned (in the case of C<processes> being greater than
 one).
 
-You cannot set this to true while a L<header_skip> value is set.
+You cannot set this to true while a C<header_skip> value is set.
 
 =head3 processes
 
@@ -368,9 +368,9 @@ for more details).
 
   $byline->do( sub { ... }, "file.txt" );
 
-This performs the L<dolines> functionality, calling the code provided.  If
-the filename is not provided, the L<file> attribute is used for this.  See the
-L<dolines> and L<parallel_dolines> functions for more information on how this
+This performs the C<dolines> functionality, calling the code provided.  If
+the filename is not provided, the C<file> attribute is used for this.  See the
+C<dolines> and C<parallel_dolines> functions for more information on how this
 functions.
 
 The code is called with one parameter, the header line.  The header line is
@@ -380,9 +380,9 @@ also stored in C<$_>.
 
   my (@output) = $byline->grep( sub { ... }, "file.txt" );
 
-This performs the L<greplines> functionality, calling the code provided.  If
-the filename is not provided, the L<file> attribute is used for this.  See the
-L<greplines> and L<parallel_greplines> functions for more information on how
+This performs the C<greplines> functionality, calling the code provided.  If
+the filename is not provided, the C<file> attribute is used for this.  See the
+C<greplines> and C<parallel_greplines> functions for more information on how
 this functions.
 
 The code is called with one parameter, the header line.  The header line is
@@ -395,9 +395,9 @@ true result.
 
   my (@output) = $byline->map( sub { ... }, "file.txt" );
 
-This performs the L<maplines> functionality, calling the code provided.  If
-the filename is not provided, the L<file> attribute is used for this.  See the
-L<maplines> and L<parallel_maplines> functions for more information on how
+This performs the C<maplines> functionality, calling the code provided.  If
+the filename is not provided, the C<file> attribute is used for this.  See the
+C<maplines> and C<parallel_maplines> functions for more information on how
 this functions.
 
 The code is called with one parameter, the header line.  The header line is
@@ -410,13 +410,13 @@ for each line of input.
 
   my (@output) = $byline->lines( "file.txt" );
 
-This performs the L<readlines> functionality.  If the filename is not provided,
-the L<file> attribute is used for this.  See the L<readlines> function for more
+This performs the C<readlines> functionality.  If the filename is not provided,
+the C<file> attribute is used for this.  See the C<readlines> function for more
 information on how this functions.
 
 The output is a list of all input lines.
 
-Note that this function is unaffected by the value of the L<processes>
+Note that this function is unaffected by the value of the C<processes>
 attribute - it always executes in the parent process.
 
 =head1 SUGGESTED DEPENDENCY
