@@ -107,7 +107,7 @@ the C<forlines()> syntax.
 sub dolines (&$) {
     my ( $code, $file ) = @_;
 
-    return $OBJ->do($code, $file);
+    return $OBJ->do( $code, $file );
 }
 
 =func forlines
@@ -132,7 +132,7 @@ not orthogonal with the C<maplines()>/C<greplines()> routines.
 sub forlines ($&) {
     my ( $file, $code ) = @_;
 
-    return $OBJ->do($code, $file);
+    return $OBJ->do( $code, $file );
 }
 
 =func parallel_dolines
@@ -180,7 +180,7 @@ sub parallel_dolines (&$$) {
     my $byline = File::ByLine::Object->new();
     $byline->processes($procs);
 
-    return $byline->do($code, $file);
+    return $byline->do( $code, $file );
 }
 
 =func parallel_forlines
@@ -228,7 +228,7 @@ sub parallel_forlines ($$&) {
     my $byline = File::ByLine::Object->new();
     $byline->processes($procs);
 
-    return $byline->do($code, $file);
+    return $byline->do( $code, $file );
 }
 
 =func greplines
@@ -252,7 +252,7 @@ This function returns the lines for which the coderef evaluates as true.
 sub greplines (&$) {
     my ( $code, $file ) = @_;
 
-    return $OBJ->grep($code, $file);
+    return $OBJ->grep( $code, $file );
 }
 
 =func parallel_greplines
@@ -302,7 +302,7 @@ sub parallel_greplines (&$$) {
     my $byline = File::ByLine::Object->new();
     $byline->processes($procs);
 
-    return $byline->grep($code, $file);
+    return $byline->grep( $code, $file );
 }
 
 =func maplines
@@ -333,7 +333,7 @@ This function returns the lines for which the coderef evaluates as true.
 sub maplines (&$) {
     my ( $code, $file ) = @_;
 
-    return $OBJ->map($code, $file);
+    return $OBJ->map( $code, $file );
 }
 
 =func parallel_maplines
@@ -377,7 +377,7 @@ sub parallel_maplines (&$$) {
     my $byline = File::ByLine::Object->new();
     $byline->processes($procs);
 
-    return $byline->map($code, $file);
+    return $byline->map( $code, $file );
 }
 
 =func readlines
@@ -400,7 +400,7 @@ sub readlines ($) {
 #
 
 sub new {
-    shift; # Remove the first parameter because we want to specify the class.
+    shift;    # Remove the first parameter because we want to specify the class.
 
     return File::ByLine::Object->new(@_);
 }
