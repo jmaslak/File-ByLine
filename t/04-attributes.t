@@ -54,11 +54,15 @@ subtest valid_file_attribute => sub {
     }
 };
 
-subtest invalid_file_attribute => sub {
+subtest invalid_attribute => sub {
     my $byline = File::ByLine->new();
     ok( defined($byline), "Object created" );
 
-    ok( dies { $byline->file(undef) }, "file() does not accept undef");
+    ok( dies { $byline->file(undef) },      "file() does not accept undef" );
+    ok( dies { $byline->processes(undef) }, "processes() does not accept undef" );
+    ok( dies { $byline->processes(0) },     "processes() does not accept 0" );
+    ok( dies { $byline->processes( 1, 2 ) }, "processes() does not accept list" );
+    ok( dies { $byline->processes( [1] ) }, "processes() does not accept arrayref" );
 };
 
 done_testing();

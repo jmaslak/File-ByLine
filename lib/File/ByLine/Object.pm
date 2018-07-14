@@ -68,10 +68,16 @@ sub processes {
         return $self->{processes};
     } elsif ( scalar(@_) == 1 ) {
         my $procs = shift;
+
+        if ( ! _is_number($procs) ) {
+            confess("processes only accepts integer values");
+        }
+
         if ( $procs < 1 ) {
             confess("Process count must be >= 1");
         }
         if ( $procs > 1 ) {
+            # Ensure we have the right packages installed
             $self->_require_parallel();
         }
         return $self->{processes} = $procs;
@@ -579,6 +585,20 @@ sub _option_helper {
     } else {
         return $default;
     }
+}
+
+sub _is_number {
+    if ( scalar(@_) != 1 ) { confess 'invalid call' }
+    my $val = shift;
+
+    if ( !defined($val) ) { return; }
+
+    return $val =~ /
+            \A              # Start of string
+            [0-9]+          # ASCII digit
+            (?: \. 0+)?     # Optional .0 or .000 or .00000 etc
+            \z              # End of string
+        /sxx;
 }
 
 =head1 SUGGESTED DEPENDENCY
