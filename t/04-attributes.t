@@ -80,7 +80,6 @@ subtest extended_info => sub {
     ok( !$byline->extended_info(),      "extended_info contains false" );
 };
 
-
 subtest header_all_files => sub {
     my $byline = File::ByLine->new();
     ok( defined($byline), "Object created" );

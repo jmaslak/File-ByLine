@@ -46,7 +46,6 @@ sub mysub {
     return sub { return 1 };
 }
 
-
 package overloadarray;
 
 use overload '@{}' => \&myarr;

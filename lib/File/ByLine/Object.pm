@@ -343,8 +343,8 @@ sub lines {
             $lineno++;
             chomp;
 
-            if ($lineno == 1) {
-                if ( $self->_handle_header($f, $_, 0, $fileno-1) ) {
+            if ( $lineno == 1 ) {
+                if ( $self->_handle_header( $f, $_, 0, $fileno - 1 ) ) {
                     next;
                 }
             }
@@ -366,9 +366,9 @@ sub _read_header {
     my $line = <$fh>;
     close $fh;
 
-    if (defined($line)) {
+    if ( defined($line) ) {
         chomp($line);
-        $self->_handle_header($file, $line, 0, $fileno);
+        $self->_handle_header( $file, $line, 0, $fileno );
     }
 
     return $line;
@@ -401,7 +401,7 @@ sub _forlines_chunk {
 
             chomp;
 
-            if ($lineno == 1 && $self->_handle_header($f, $_, $part, $fileno-1) ) {
+            if ( $lineno == 1 && $self->_handle_header( $f, $_, $part, $fileno - 1 ) ) {
                 # Do nothing, we handled the header.
             } else {
                 if ($extended_info) {
@@ -452,7 +452,7 @@ sub _grepmap_chunk {
 
             chomp;
 
-            if ($lineno == 1 && $self->_handle_header($f, $_, $part, $fileno-1) ) {
+            if ( $lineno == 1 && $self->_handle_header( $f, $_, $part, $fileno - 1 ) ) {
                 # Do nothing, we handled the header.
             } elsif ( ( !$part )
                 && ( $fileno == 1 )
@@ -676,28 +676,28 @@ sub _extended {
 #
 # This should never be called except for the first line of a file
 sub _handle_header {
-    if (scalar(@_) != 5) { confess 'invalid call' }
-    my ($self, $filename, $line, $part, $fileno) = @_;
+    if ( scalar(@_) != 5 ) { confess 'invalid call' }
+    my ( $self, $filename, $line, $part, $fileno ) = @_;
 
     if ($part) { return; }
 
-    if ( (! $self->header_skip()) && (!defined($self->header_handler())) ) {
+    if ( ( !$self->header_skip() ) && ( !defined( $self->header_handler() ) ) ) {
         return;
     }
 
-    if ($fileno && (!$self->header_all_files())) {
+    if ( $fileno && ( !$self->header_all_files() ) ) {
         return;
     }
 
     # We have a header to process.
-    if (defined($self->header_handler())) {
+    if ( defined( $self->header_handler() ) ) {
         local $_ = $line;
 
-        if ($self->{extended_info}) {
+        if ( $self->{extended_info} ) {
             my $extended = $self->_extended( $filename, $part );
             $self->{header_handler}( $line, $extended );
         } else {
-            $self->{header_handler}( $line );
+            $self->{header_handler}($line);
         }
     }
     return 1;
