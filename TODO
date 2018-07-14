@@ -11,7 +11,7 @@ Todo Items:
   * A more detailed CONTRIBUTING file
   * Ability to lock the file before read (particularly for use with the
     header option)
-  * Ability to automically read file (copy to temp file, read, delete
+  * Ability to atomically read file (copy to temp file, read, delete
     temp file)
   * The header_handler function and header_skip should handle multi-line
     headers.
