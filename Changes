@@ -1,4 +1,11 @@
 {{$NEXT}}
+ Joelle Maslak <jmaslak@antelope.net>
+ * From 1.181951 Multifile Interface
+ * From 1.181951 Constructor accepts parameters now
+ * From 1.181951 Better attribute checking
+ * From 1.181951 Pass extended information hash (when extended_info is true)
+                 to all user provided code references.
+ * From 1.181950 Bugfix: Github Issue #5 - Don't allow non-coderef as header_handler
 
 1.181951  2018-07-14 16:49:07-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
