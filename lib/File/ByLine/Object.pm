@@ -27,6 +27,7 @@ use Scalar::Util qw(blessed reftype);
 # hashref of two values: accessor and default value.
 my (%ATTRIBUTE) = (
     file           => [ \&file,           undef ],
+    extended_info  => [ \&extended_info,  undef ],
     header_handler => [ \&header_handler, undef ],
     header_skip    => [ \&header_skip,    undef ],
     processes      => [ \&processes,      1 ],
@@ -42,8 +43,6 @@ documented there.
 #
 # Attribute Accessor - file
 #
-# The file we operate on (most methods accept a file parameter - this is
-# only used if one is not set)
 sub file {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -54,6 +53,21 @@ sub file {
         return $self->{file} = $file;
     } else {
         return $self->{file} = [@_];
+    }
+}
+
+#
+# Attribute Accessor - extended_info
+#
+# Do we pass an extended information hash to the user process?
+sub extended_info {
+    my ($self) = shift;
+    if ( scalar(@_) == 0 ) {
+        return $self->{extended_info};
+    } elsif ( scalar(@_) == 1 ) {
+        return $self->{extended_info} = !!$_[0];    # !! to convert to fast boolean
+    } else {
+        confess("Invalid call");
     }
 }
 
@@ -69,7 +83,7 @@ sub processes {
     } elsif ( scalar(@_) == 1 ) {
         my $procs = shift;
 
-        if ( ! _is_number($procs) ) {
+        if ( !_is_number($procs) ) {
             confess("processes only accepts integer values");
         }
 
@@ -183,10 +197,17 @@ sub do {
     if ( !defined($file) )   { confess "Must provide filename"; }
     if ( !_listlike($file) ) { $file = [$file] }
 
+    my $extended_info = $self->{extended_info};
+
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header( $file->[0] );
         if ( defined($header) ) {
-            $self->{header_handler}($header);
+            if ($extended_info) {
+                my $extended = $self->_extended( $file->[0], 0 );
+                $self->{header_handler}( $header, $extended );
+            } else {
+                $self->{header_handler}($header);
+            }
         }
     }
 
@@ -241,10 +262,17 @@ sub _grepmap {
     if ( !defined($file) )   { confess "Must provide filename"; }
     if ( !_listlike($file) ) { $file = [$file] }
 
+    my $extended_info = $self->{extended_info};
+
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header( $file->[0] );
         if ( defined($header) ) {
-            $self->{header_handler}($header);
+            if ($extended_info) {
+                my $extended = $self->_extended( $file->[0], 0 );
+                $self->{header_handler}( $header, $extended );
+            } else {
+                $self->{header_handler}($header);
+            }
         }
     }
 
@@ -294,11 +322,14 @@ sub lines {
     if ( !_listlike($file) ) { $file = [$file] }
 
     my @lines;
-    my $fileno = 0;
-    my $lineno = 0;
+    my $fileno        = 0;
+    my $lineno        = 0;
+    my $extended_info = $self->{extended_info};
 
     for my $f (@$file) {
         $fileno++;
+
+        my $extended = $self->_extended( $f, 0 );
 
         open my $fh, '<', $f or die($!);
 
@@ -307,7 +338,11 @@ sub lines {
             chomp;
 
             if ( ( $fileno == 1 ) && ( $lineno == 1 ) && defined( $self->{header_handler} ) ) {
-                $self->{header_handler}($_);
+                if ($extended_info) {
+                    $self->{header_handler}( $_, $extended );
+                } else {
+                    $self->{header_handler}($_);
+                }
             } elsif ( ( $fileno == 1 ) && ( $lineno == 1 ) && $self->{header_skip} ) {
                 # Do nothing;
             } else {
@@ -343,11 +378,14 @@ sub _read_header {
 sub _forlines_chunk {
     my ( $self, $code, $file, $part ) = @_;
 
-    my $fileno = 0;
-    my $lineno = 0;
+    my $fileno        = 0;
+    my $lineno        = 0;
+    my $extended_info = $self->{extended_info};
 
     for my $f (@$file) {
         $fileno++;
+
+        my $extended = $self->_extended( $f, $part );
 
         my $procs = $self->{processes};
         my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
@@ -371,7 +409,11 @@ sub _forlines_chunk {
             {
                 # Do nothing, we're skipping the header.
             } else {
-                $code->($_);
+                if ($extended_info) {
+                    $code->( $_, $extended );
+                } else {
+                    $code->($_);
+                }
             }
 
             # If we're reading multi-parts, do we need to end the read?
@@ -398,11 +440,14 @@ sub _grepmap_chunk {
     my ( $self, $code, $file, $isgrep, $procs, $part ) = @_;
 
     my @mapped_lines;
-    my $fileno = 0;
-    my $lineno = 0;
+    my $fileno        = 0;
+    my $lineno        = 0;
+    my $extended_info = $self->{extended_info};
 
     for my $f (@$file) {
         $fileno++;
+
+        my $extended = $self->_extended( $f, $part );
 
         my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
 
@@ -417,7 +462,7 @@ sub _grepmap_chunk {
                 && ( $lineno == 1 )
                 && ( defined( $self->{header_handler} ) ) )
             {
-                $self->{header_handler}($_);
+                # Do nothing, we're skipping the header.
             } elsif ( ( !$part )
                 && ( $fileno == 1 )
                 && ( $lineno == 1 )
@@ -426,12 +471,22 @@ sub _grepmap_chunk {
                 # Do nothing, we're skipping the header.
             } else {
                 if ($isgrep) {
-                    if ( $code->($_) ) {
-                        push @filelines, $_;
+                    if ($extended_info) {
+                        if ( $code->($_, $extended) ) {
+                            push @filelines, $_;
+                        }
+                    } else {
+                        if ( $code->($_) ) {
+                            push @filelines, $_;
+                        }
                     }
                 } else {
                     # We are doing a map
-                    push @filelines, $code->($_);
+                    if ($extended_info) {
+                        push @filelines, $code->( $_, $extended );
+                    } else {
+                        push @filelines, $code->($_);
+                    }
                 }
             }
 
@@ -599,6 +654,18 @@ sub _is_number {
             (?: \. 0+)?     # Optional .0 or .000 or .00000 etc
             \z              # End of string
         /sxx;
+}
+
+# Returns an extended info object
+sub _extended {
+    if ( scalar(@_) != 3 ) { confess 'invalid call' }
+    my ( $self, $filename, $process_number ) = @_;
+
+    return {
+        filename       => $filename,
+        object         => $self,
+        process_number => $process_number,
+    };
 }
 
 =head1 SUGGESTED DEPENDENCY

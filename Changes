@@ -1,5 +1,6 @@
 {{$NEXT}}
  Joelle Maslak <jmaslak@antelope.net>
+ * TRIAL/DEV RELEASE ONLY
  * From 1.181950 Bugfix: Github Issue #5 - Don't allow non-coderef as header_handler
  * From 1.181950 Multifile Interface
  * Preserve ordering for parallel map/grep multifile interfaces
@@ -7,6 +8,8 @@
  * Combine grep & map code
  * Can pass file() attribute either arrayref or list of files
  * Better attribute checking
+ * Pass extended information hash (when extended_info is true) to all
+   user provided code references.
 
 1.181950  2018-07-13 21:14:47-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>

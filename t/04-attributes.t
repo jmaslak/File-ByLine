@@ -23,7 +23,7 @@ use Test2::V0;
 
 use File::ByLine;
 
-subtest valid_file_attribute => sub {
+subtest file_attribute => sub {
     my $byline = File::ByLine->new();
     ok( defined($byline), "Object created" );
 
@@ -52,17 +52,32 @@ subtest valid_file_attribute => sub {
             is( $byline->file($list),  $list, "$desc - Arrayref of Elements" );
         }
     }
+
+    ok( dies { $byline->file(undef) }, "file() does not accept undef" );
 };
 
-subtest invalid_attribute => sub {
+subtest processes_attribute => sub {
     my $byline = File::ByLine->new();
     ok( defined($byline), "Object created" );
 
-    ok( dies { $byline->file(undef) },      "file() does not accept undef" );
+    is( $byline->processes(), 1, "processes defaults to 1" );
+
     ok( dies { $byline->processes(undef) }, "processes() does not accept undef" );
     ok( dies { $byline->processes(0) },     "processes() does not accept 0" );
     ok( dies { $byline->processes( 1, 2 ) }, "processes() does not accept list" );
     ok( dies { $byline->processes( [1] ) }, "processes() does not accept arrayref" );
+};
+
+subtest extended_info => sub {
+    my $byline = File::ByLine->new();
+    ok( defined($byline), "Object created" );
+
+    ok( !$byline->extended_info(), "extended_info defaults to false" );
+
+    ok( $byline->extended_info(1),      "extended_info set to true" );
+    ok( $byline->extended_info(),       "extended_info contains true" );
+    ok( !$byline->extended_info(undef), "extended_info set to false" );
+    ok( !$byline->extended_info(),      "extended_info contains false" );
 };
 
 done_testing();

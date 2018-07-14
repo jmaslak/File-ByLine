@@ -244,7 +244,11 @@ subtest parallel_dolines_multifile_with_header => sub {
     #
 
     my $header;
+
+    # We also test the extended option.
     my $byline = File::ByLine->new();
+    $byline->extended_info(1);
+
     $byline->header_handler( sub { $header = $_ } );
     $byline->processes(4);
 
@@ -253,11 +257,11 @@ subtest parallel_dolines_multifile_with_header => sub {
             my $line = shift;
 
             if ( $line eq 'Line 1' ) {
-                print $fh1 "$line\n";
+                print $fh1 "$line " . $_[0]->{process_number} . "\n";
             } elsif ( $line eq 'Line 2' ) {
                 print $fh2 "$line\n";
             } elsif ( $line eq 'Line 3' ) {
-                print $fh3 "$line\n";
+                print $fh3 "$line " . $_[0]->{process_number} . "\n";
             } elsif ( $line eq $justaline ) {
                 print $fh4 "$line\n";
             } else {
@@ -292,9 +296,9 @@ subtest parallel_dolines_multifile_with_header => sub {
     chomp($l5) if defined $l5;
 
     is( $header,  $expected_header,   'Read header properly' );
-    is( $l1,      $lines[0],          'Line 0 correct' );
+    is( $l1,      $lines[0] . " 1",   'Line 0 correct' );
     is( $l2,      $lines[1],          'Line 1 correct' );
-    is( $l3,      $lines[2],          'Line 2 correct' );
+    is( $l3,      $lines[2] . " 3",   'Line 2 correct' );
     is( $l4,      $justaline,         'Line 4 correct' );
     is( $l5,      undef,              'No unexpected text' );
     is( $linecnt, scalar(@lines) + 2, 'Return value is proper' );

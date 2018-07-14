@@ -23,12 +23,15 @@ my (@lines) = ( 'Line 1', 'Line 2', 'Line 3', );
 my $lc = 0;
 my @flret;
 
+my $extended = 0;
+
 subtest dolines_inline => sub {
     my @result;
     @flret = ();
 
     my $lineno  = 0;
     my $linecnt = dolines {
+        line_sub(@_);
         $lineno++;
         my $line = shift;
 
@@ -48,6 +51,7 @@ subtest dolines_multifile_single_inline => sub {
 
     my $lineno  = 0;
     my $linecnt = dolines {
+        line_sub(@_);
         $lineno++;
         my $line = shift;
 
@@ -68,11 +72,12 @@ subtest dolines_inline_with_header => sub {
     my $header;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = $_ } );
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
 
     my $lineno  = 0;
     my $linecnt = $byline->do(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -95,12 +100,17 @@ subtest dolines_multifile_with_header => sub {
     my $header;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = $_ } );
+
+    $extended = 1;
+    $byline->extended_info(1);
+
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
     $byline->file( [ "t/data/3lines-with-header.txt", "t/data/3lines.txt" ] );
 
     my $lineno  = 0;
     my $linecnt = $byline->do(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -112,6 +122,8 @@ subtest dolines_multifile_with_header => sub {
 
     is( \@result, [ @lines, @lines ], 'Read 2x 3 line files' );
     is( $linecnt, scalar(@lines) * 2 + 1, 'Return value is proper' );
+
+    $extended = 0;
 };
 
 subtest dolines_inline_with_filename => sub {
@@ -121,12 +133,17 @@ subtest dolines_inline_with_filename => sub {
     my $header;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = $_ } );
+
+    $extended = 1;
+    $byline->extended_info(1);
+
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
     $byline->file("t/data/3lines-with-header.txt");
 
     my $lineno  = 0;
     my $linecnt = $byline->do(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -139,6 +156,8 @@ subtest dolines_inline_with_filename => sub {
     is( $header,  $expected_header,   'Read header properly' );
     is( \@result, \@lines,            'Read file with header' );
     is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
+
+    $extended = 0;
 };
 
 subtest dolines_inline_with_filename_override => sub {
@@ -153,6 +172,7 @@ subtest dolines_inline_with_filename_override => sub {
     my $lineno  = 0;
     my $linecnt = $byline->do(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -177,6 +197,7 @@ subtest dolines_inline_skip_header => sub {
     my $lineno  = 0;
     my $linecnt = $byline->do(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -197,6 +218,7 @@ subtest forlines_inline => sub {
 
     my $lineno = 0;
     my $linecnt = forlines "t/data/3lines.txt", sub {
+        line_sub(@_);
         $lineno++;
         my $line = shift;
 
@@ -244,6 +266,7 @@ subtest forlines_sub => sub {
 subtest maplines_one_for_one => sub {
     my $lineno = 0;
     my @result = maplines {
+        line_sub(@_);
         $lineno++;
         my $line = shift;
 
@@ -262,10 +285,15 @@ subtest maplines_with_header => sub {
     my $lineno = 0;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = shift; } );
+
+    $extended = 1;
+    $byline->extended_info(1);
+
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
 
     my @result = $byline->map(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -279,6 +307,8 @@ subtest maplines_with_header => sub {
 
     is( $header,  $expected_header, 'Read header properly' );
     is( \@result, \@lc,             'Read 3 line file' );
+
+    $extended = 0;
 };
 
 subtest maplines_with_filename => sub {
@@ -286,11 +316,12 @@ subtest maplines_with_filename => sub {
     my $lineno = 0;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = shift; } );
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
     $byline->file("t/data/3lines-with-header.txt");
 
     my @result = $byline->map(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -314,6 +345,7 @@ subtest maplines_with_filename_override => sub {
 
     my @result = $byline->map(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -336,6 +368,7 @@ subtest maplines_skip_header => sub {
 
     my @result = $byline->map(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -353,6 +386,7 @@ subtest maplines_skip_header => sub {
 subtest maplines_none_and_two => sub {
     my $lineno = 0;
     my @result = maplines {
+        line_sub(@_);
         $lineno++;
         my $line = shift;
 
@@ -372,6 +406,7 @@ subtest maplines_none_and_two => sub {
 subtest greplines => sub {
     my $lineno = 0;
     my @result = greplines {
+        line_sub(@_);
         $lineno++;
         my $line = shift;
 
@@ -392,10 +427,15 @@ subtest greplines_with_header => sub {
     my $lineno = 0;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = shift; } );
+
+    $extended = 1;
+    $byline->extended_info(1);
+
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
 
     my @result = $byline->grep(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -411,6 +451,8 @@ subtest greplines_with_header => sub {
 
     is( $header,  $expected_header, 'Read header properly' );
     is( \@result, \@expected,       'Read 3 line file' );
+
+    $extended = 0;
 };
 
 subtest greplines_with_filename => sub {
@@ -418,11 +460,12 @@ subtest greplines_with_filename => sub {
     my $lineno = 0;
 
     my $byline = File::ByLine->new();
-    $byline->header_handler( sub { $header = shift; } );
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
     $byline->file("t/data/3lines-with-header.txt");
 
     my @result = $byline->grep(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -448,6 +491,7 @@ subtest greplines_with_filename_override => sub {
 
     my @result = $byline->grep(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -472,6 +516,7 @@ subtest greplines_skip_header => sub {
 
     my @result = $byline->grep(
         sub {
+            line_sub(@_);
             $lineno++;
             my $line = shift;
 
@@ -545,7 +590,7 @@ subtest readlines_object_with_header_handler => sub {
     my $header;
     my $byline = File::ByLine->new();
     $byline->file("t/data/3lines-with-header.txt");
-    $byline->header_handler( sub { $header = $_ } );
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
 
     my (@result) = $byline->lines();
 
@@ -559,13 +604,63 @@ subtest readlines_object_multifile_with_header => sub {
     my $header;
     my $byline = File::ByLine->new();
     $byline->file( [ "t/data/3lines-with-header.txt", "t/data/3lines.txt" ] );
-    $byline->header_handler( sub { $header = $_ } );
+
+    $extended = 1;
+    $byline->extended_info(1);
+
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
 
     my (@result) = $byline->lines();
 
     is( \@result, [ @lines, @lines ], 'Read 2x 3 line files' );
     is( $header, $expected_header, 'Read header properly' );
+
+    $extended = 0;
 };
 
 done_testing();
+
+sub hh_sub {
+    is( $_, $_[0], "hh_sub: header line matches" );
+
+    if ($extended) {
+        is( scalar(@_), 2, "hh_sub: two parameters passed" );
+
+        my $ext = $_[1];
+        ok( $ext->{object}->processes() >= 1, "hh_sub: object seems valid" );
+        ok( defined( $ext->{filename} ),      "hh_sub: filename seems valid" );
+        ok( $ext->{process_number} >= 0,      "hh_sub: process_number >= 0" );
+        ok(
+            $ext->{process_number} < $ext->{object}->processes(),
+            "hh_sub: process_number < num_processes()"
+        );
+
+    } else {
+        is( scalar(@_), 1, "hh_sub: one parameter passed" );
+    }
+
+    return $_;
+}
+
+sub line_sub {
+    is( $_, $_[0], "line_sub: line matches" );
+
+    if ($extended) {
+        is( scalar(@_), 2, "line_sub: two parameters passed" );
+
+        my $ext = $_[1];
+        ok( $ext->{object}->processes() >= 1, "line_sub: object seems valid" );
+        ok( defined( $ext->{filename} ),      "line_sub: filename seems valid" );
+        ok( $ext->{process_number} >= 0,      "line_sub: process_number >= 0" );
+        ok(
+            $ext->{process_number} < $ext->{object}->processes(),
+            "line_sub: process_number < num_processes()"
+        );
+
+    } else {
+        is( scalar(@_), 1, "line_sub: one parameter passed" );
+    }
+
+    return $_;
+}
 

@@ -133,8 +133,8 @@ our @EXPORT_OK =
 This function calls a coderef once for each line in the file.  The file is read
 line-by-line, removes the newline character(s), and then executes the coderef.
 
-Each line (without newline) is passed to the coderef as the first parameter and
-only parameter to the coderef.  It is also placed into C<$_>.
+Each line (without newline) is passed to the coderef as the only parameter to
+the coderef.  It is also placed into C<$_>.
 
 This function returns the number of lines in the file.
 
@@ -164,8 +164,8 @@ sub dolines (&$) {
 This function calls a coderef once for each line in the file.  The file is read
 line-by-line, removes the newline character(s), and then executes the coderef.
 
-Each line (without newline) is passed to the coderef as the first parameter and
-only parameter to the coderef.  It is also placed into C<$_>.
+Each line (without newline) is passed to the coderef as the only parameter to
+the coderef.  It is also placed into C<$_>.
 
 This function returns the number of lines in the file.
 
@@ -298,8 +298,8 @@ the return value of that coderef, returns only the lines where the coderef
 evaluates to true.  This is similar to the C<grep> built-in function, except
 operating on file input rather than array input.
 
-Each line (without newline) is passed to the coderef as the first parameter and
-only parameter to the coderef.  It is also placed into C<$_>.
+Each line (without newline) is passed to the coderef as the only parameter to
+the coderef.  It is also placed into C<$_>.
 
 This function returns the lines for which the coderef evaluates as true.
 
@@ -376,8 +376,8 @@ basically if the coderef returns a list, all elements of that list are added
 as distinct elements to the return value array.  If the coderef returns an
 empty list, no elements are added.
 
-Each line (without newline) is passed to the coderef as the first parameter and
-only parameter to the coderef.  It is also placed into C<$_>.
+Each line (without newline) is passed to the coderef as the only parameter to
+the coderef.  It is also placed into C<$_>.
 
 This is meant to be similar to the built-in C<map> function.
 
@@ -483,6 +483,34 @@ Constructs a new object, suitable for the object oriented calls below.
 
 =head2 ATTRIBUTES
 
+=head3 extended_info
+
+  $byline->extended_info(1);
+
+This was added in 1.181951.
+
+Gets and sets the "extended information" flag.  This defaults to false, but
+if set to a true value this will pass a second parameter to all user-defined
+code (such as the per-line code function in C<dolines> and C<do> and the
+C<header_handler> function.
+
+For all code, this information will be passed as the second argument to the
+user defined code.  It will be a hashref with the following keys defined:
+
+=over 4
+
+=item C<filename> - The filename currently being processed
+
+=item C<object> - An object corresponding to either the current explicit or implicit C<File::ByLine> object
+
+=item C<process_number> - Which child process (first process is zero)
+
+=back
+
+This object should not be modified by user code.  In addition, no attributes
+of the explict or implicit File::ByLine object passed as part of this hashref
+should be modified within user code.
+
 =head3 file
 
   my $current_file = $byline->file();
@@ -519,8 +547,9 @@ When a header handler is specified, the first row of the file is sent to this
 handler, and is not sent to the code provided to the various do/grep/map/lines
 methods in the object oriented interface.
 
-The code is called with one parameter, the header line.  The header line is
-also stored in C<$_>.
+The code is called with one or two parameters, the header line, and, if the
+C<extended_info> attribute is set, the extended information hashref.  The
+header line is also stored in C<$_>.
 
 When set, this is always executed in the parent process, not in the child
 processes that are spawned (in the case of C<processes> being greater than
@@ -550,8 +579,10 @@ the filename is not provided, the C<file> attribute is used for this.  See the
 C<dolines> and C<parallel_dolines> functions for more information on how this
 functions.
 
-The code is called with one parameter, the header line.  The header line is
-also stored in C<$_>.
+Each line (without newline) is passed to the coderef as the first parameter to
+the coderef.  It is also placed into C<$_>.  If the C<extended_info> attribute
+is true, the extended information hashref will be passed as the second
+parameter.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
 files are read in turn as if they are all one file. Note that if the file
@@ -567,8 +598,10 @@ the filename is not provided, the C<file> attribute is used for this.  See the
 C<greplines> and C<parallel_greplines> functions for more information on how
 this functions.
 
-The code is called with one parameter, the header line.  The header line is
-also stored in C<$_>.
+Each line (without newline) is passed to the coderef as the first parameter to
+the coderef.  It is also placed into C<$_>.  If the C<extended_info> attribute
+is true, the extended information hashref will be passed as the second
+parameter.
 
 The output is a list of all input lines where the code reference produces a
 true result.
@@ -587,8 +620,10 @@ the filename is not provided, the C<file> attribute is used for this.  See the
 C<maplines> and C<parallel_maplines> functions for more information on how
 this functions.
 
-The code is called with one parameter, the header line.  The header line is
-also stored in C<$_>.
+Each line (without newline) is passed to the coderef as the first parameter to
+the coderef.  It is also placed into C<$_>.  If the C<extended_info> attribute
+is true, the extended information hashref will be passed as the second
+parameter.
 
 The output is the list produced by calling the passed-in code repeatively
 for each line of input.
