@@ -136,11 +136,12 @@ sub do {
     if ( scalar(@_) < 2 ) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
 
-    if ( !defined($file) ) { $file = $self->{file} }
-    if ( !defined($file) ) { confess "Must provide filename"; }
+    if ( !defined($file) )   { $file = $self->{file} }
+    if ( !defined($file) )   { confess "Must provide filename"; }
+    if ( !_listlike($file) ) { $file = [$file] }
 
     if ( defined( $self->{header_handler} ) ) {
-        my $header = $_ = $self->_read_header($file);
+        my $header = $_ = $self->_read_header( $file->[0] );
         if ( defined($header) ) {
             $self->{header_handler}($header);
         }
@@ -171,11 +172,12 @@ sub grep {
     if ( scalar(@_) < 2 ) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
 
-    if ( !defined($file) ) { $file = $self->{file} }
-    if ( !defined($file) ) { confess "Must provide filename"; }
+    if ( !defined($file) )   { $file = $self->{file} }
+    if ( !defined($file) )   { confess "Must provide filename"; }
+    if ( !_listlike($file) ) { $file = [$file] }
 
     if ( defined( $self->{header_handler} ) ) {
-        my $header = $_ = $self->_read_header($file);
+        my $header = $_ = $self->_read_header( $file->[0] );
         if ( defined($header) ) {
             $self->{header_handler}($header);
         }
@@ -204,11 +206,12 @@ sub map {
     if ( scalar(@_) < 2 ) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
 
-    if ( !defined($file) ) { $file = $self->{file} }
-    if ( !defined($file) ) { confess "Must provide filename"; }
+    if ( !defined($file) )   { $file = $self->{file} }
+    if ( !defined($file) )   { confess "Must provide filename"; }
+    if ( !_listlike($file) ) { $file = [$file] }
 
     if ( defined( $self->{header_handler} ) ) {
-        my $header = $_ = $self->_read_header($file);
+        my $header = $_ = $self->_read_header( $file->[0] );
         if ( defined($header) ) {
             $self->{header_handler}($header);
         }
@@ -237,28 +240,34 @@ sub lines {
     if ( scalar(@_) < 1 ) { confess "Invalid call"; }
     my ( $self, $file ) = @_;
 
-    if ( !defined($file) ) { $file = $self->{file} }
-    if ( !defined($file) ) { confess "Must provide filename"; }
+    if ( !defined($file) )   { $file = $self->{file} }
+    if ( !defined($file) )   { confess "Must provide filename"; }
+    if ( !_listlike($file) ) { $file = [$file] }
 
     my @lines;
+    my $fileno = 0;
+    my $lineno = 0;
 
-    open my $fh, '<', $file or die($!);
+    for my $f (@$file) {
+        $fileno++;
 
-    my $lineno;
-    while (<$fh>) {
-        $lineno++;
-        chomp;
+        open my $fh, '<', $f or die($!);
 
-        if ( ( $lineno == 1 ) && defined( $self->{header_handler} ) ) {
-            $self->{header_handler}($_);
-        } elsif ( ( $lineno == 1 ) && $self->{header_skip} ) {
-            # Do nothing;
-        } else {
-            push @lines, $_;
+        while (<$fh>) {
+            $lineno++;
+            chomp;
+
+            if ( ( $fileno == 1 ) && ( $lineno == 1 ) && defined( $self->{header_handler} ) ) {
+                $self->{header_handler}($_);
+            } elsif ( ( $fileno == 1 ) && ( $lineno == 1 ) && $self->{header_skip} ) {
+                # Do nothing;
+            } else {
+                push @lines, $_;
+            }
         }
-    }
 
-    close $fh;
+        close $fh;
+    }
 
     return @lines;
 }
@@ -285,29 +294,43 @@ sub _read_header {
 sub _forlines_chunk {
     my ( $self, $code, $file, $part ) = @_;
 
-    my $procs = $self->{processes};
-    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
-
+    my $fileno = 0;
     my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
 
-        chomp;
+    for my $f (@$file) {
+        $fileno++;
 
-        # Handle header option
-        if ( ( !$part ) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
-            # Do nothing, we're skipping the header.
-        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
-            # Do nothing, we're skipping the header.
-        } else {
-            $code->($_);
+        my $procs = $self->{processes};
+        my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
+
+        while (<$fh>) {
+            $lineno++;
+
+            chomp;
+
+            # Handle header option
+            if (   ( !$part )
+                && ( $fileno == 1 )
+                && ( $lineno == 1 )
+                && ( defined( $self->{header_handler} ) ) )
+            {
+                # Do nothing, we're skipping the header.
+            } elsif ( ( !$part )
+                && ( $fileno == 1 )
+                && ( $lineno == 1 )
+                && ( $self->{header_skip} ) )
+            {
+                # Do nothing, we're skipping the header.
+            } else {
+                $code->($_);
+            }
+
+            # If we're reading multi-parts, do we need to end the read?
+            if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
         }
 
-        # If we're reading multi-parts, do we need to end the read?
-        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
+        close $fh;
     }
-
-    close $fh;
 
     return $lineno;
 }
@@ -322,30 +345,45 @@ sub _forlines_chunk {
 sub _grep_chunk {
     my ( $self, $code, $file, $procs, $part ) = @_;
 
-    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
-
     my @lines;
+    my $fileno = 0;
     my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
 
-        chomp;
+    for my $f (@$file) {
+        $fileno++;
 
-        if ( ( !$part ) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
-            $self->{header_handler}($_);
-        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
-            # Do nothing, we're skipping the header.
-        } else {
-            if ( $code->($_) ) {
-                push @lines, $_;
+        my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
+
+        while (<$fh>) {
+            $lineno++;
+
+            chomp;
+
+            if (   ( !$part )
+                && ( $fileno == 1 )
+                && ( $lineno == 1 )
+                && ( defined( $self->{header_handler} ) ) )
+            {
+                $self->{header_handler}($_);
+            } elsif ( ( !$part )
+                && ( $fileno == 1 )
+                && ( $lineno == 1 )
+                && ( $self->{header_skip} ) )
+            {
+                # Do nothing, we're skipping the header.
+            } else {
+                if ( $code->($_) ) {
+                    push @lines, $_;
+                }
             }
+
+            # If we're reading multi-parts, do we need to end the read?
+            if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
         }
 
-        # If we're reading multi-parts, do we need to end the read?
-        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
+        close $fh;
     }
 
-    close $fh;
     return \@lines;
 }
 
@@ -359,28 +397,43 @@ sub _grep_chunk {
 sub _map_chunk {
     my ( $self, $code, $file, $procs, $part ) = @_;
 
-    my ( $fh, $end ) = _open_and_seek( $file, $procs, $part );
-
     my @mapped_lines;
+    my $fileno = 0;
     my $lineno = 0;
-    while (<$fh>) {
-        $lineno++;
 
-        chomp;
+    for my $f (@$file) {
+        $fileno++;
 
-        if ( ( !$part ) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
-            $self->{header_handler}($_);
-        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
-            # Do nothing, we're skipping the header.
-        } else {
-            push @mapped_lines, $code->($_);
+        my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
+
+        while (<$fh>) {
+            $lineno++;
+
+            chomp;
+
+            if (   ( !$part )
+                && ( $fileno == 1 )
+                && ( $lineno == 1 )
+                && ( defined( $self->{header_handler} ) ) )
+            {
+                $self->{header_handler}($_);
+            } elsif ( ( !$part )
+                && ( $fileno == 1 )
+                && ( $lineno == 1 )
+                && ( $self->{header_skip} ) )
+            {
+                # Do nothing, we're skipping the header.
+            } else {
+                push @mapped_lines, $code->($_);
+            }
+
+            # If we're reading multi-parts, do we need to end the read?
+            if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
         }
 
-        # If we're reading multi-parts, do we need to end the read?
-        if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
+        close $fh;
     }
 
-    close $fh;
     return \@mapped_lines;
 }
 
@@ -497,6 +550,16 @@ sub _codelike {
 
     if ( defined( reftype($thing) ) && ( reftype($thing) eq 'CODE' ) ) { return 1; }
     if ( blessed($thing) && overload::Method( $thing, '&{}' ) ) { return 1; }
+
+    return;
+}
+
+sub _listlike {
+    if ( scalar(@_) != 1 ) { confess 'invalid call' }
+    my $thing = shift;
+
+    if ( reftype($thing) ) { return 1; }
+    if ( defined(blessed($thing)) && overload::Method( $thing, '[]' ) ) { return 1; }
 
     return;
 }

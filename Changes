@@ -2,6 +2,7 @@
  Joelle Maslak <jmaslak@antelope.net>
  * TRIAL/DEV RELEASE ONLY
  * Bugfix: Github Issue #5 - Don't allow non-coderef as header_handler
+ * Multifile Interface
 
 1.181861  2018-07-05 07:42:19-06:00 America/Denver
  Joelle Maslak <jmaslak@antelope.net>

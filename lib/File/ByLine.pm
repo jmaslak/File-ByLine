@@ -143,6 +143,11 @@ recommends this form for short code blocks - I.E. a coderef that fits on
 one line.  For longer, multi-line code blocks, the author recommends
 the C<forlines()> syntax.
 
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
+
 =cut
 
 sub dolines (&$) {
@@ -184,6 +189,11 @@ Requires L<Parallel::WorkUnit> to be installed.
 
 Three parameters are requied: a codref, a filename, and number of simultanious
 child threads to use.
+
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
 
 This function performs similar to C<dolines()>, except that it does its'
 operations in parallel using C<fork()> and L<Parallel::WorkUnit>.  Because
@@ -232,6 +242,11 @@ Requires L<Parallel::WorkUnit> to be installed.
 
 Three parameters are requied: a filename, a codref, and number of simultanious
 child threads to use.
+
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
 
 This function performs similar to C<forlines()>, except that it does its'
 operations in parallel using C<fork()> and L<Parallel::WorkUnit>.  Because
@@ -302,6 +317,11 @@ sub greplines (&$) {
 
 Three parameters are requied: a coderef, filename, and number of simultanious
 child threads to use.
+
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
 
 This function performs similar to C<greplines()>, except that it does its'
 operations in parallel using C<fork()> and L<Parallel::WorkUnit>.  Because
@@ -383,6 +403,11 @@ sub maplines (&$) {
 
 Three parameters are requied: a coderef, filename, and number of simultanious
 child threads to use.
+
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
 
 This function performs similar to C<maplines()>, except that it does its'
 operations in parallel using C<fork()> and L<Parallel::WorkUnit>.  Because
@@ -467,6 +492,11 @@ Gets and sets the default filename used by the methods in the object oriented
 interface.  The default value is C<undef> which indicates that no default
 filename is provided.
 
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
+
 =head3 header_skip
 
   $byline->header_skip(1);
@@ -521,6 +551,11 @@ functions.
 The code is called with one parameter, the header line.  The header line is
 also stored in C<$_>.
 
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
+
 =head3 grep
 
   my (@output) = $byline->grep( sub { ... }, "file.txt" );
@@ -535,6 +570,11 @@ also stored in C<$_>.
 
 The output is a list of all input lines where the code reference produces a
 true result.
+
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
 
 =head3 map
 
@@ -551,6 +591,11 @@ also stored in C<$_>.
 The output is the list produced by calling the passed-in code repeatively
 for each line of input.
 
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
+
 =head3 lines
 
   my (@output) = $byline->lines( "file.txt" );
@@ -563,6 +608,11 @@ The output is a list of all input lines.
 
 Note that this function is unaffected by the value of the C<processes>
 attribute - it always executes in the parent process.
+
+Instead of a single filename, an arrayref can be passed in, in which case the
+files are read in turn as if they are all one file. Note that if the file
+doesn't end in a newline, a newline is inserted before processing the next
+file.
 
 =head1 SUGGESTED DEPENDENCY
 

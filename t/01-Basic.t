@@ -42,6 +42,25 @@ subtest dolines_inline => sub {
     is( $linecnt, scalar(@lines), 'Return value is proper' );
 };
 
+subtest dolines_multifile_single_inline => sub {
+    my @result;
+    @flret = ();
+
+    my $lineno  = 0;
+    my $linecnt = dolines {
+        $lineno++;
+        my $line = shift;
+
+        push @result, $line;
+
+        is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+    }
+    ["t/data/3lines.txt"];
+
+    is( \@result, \@lines,        'Read 3 line file' );
+    is( $linecnt, scalar(@lines), 'Return value is proper' );
+};
+
 subtest dolines_inline_with_header => sub {
     my @result;
     @flret = ();
@@ -67,6 +86,32 @@ subtest dolines_inline_with_header => sub {
     is( $header,  $expected_header,   'Read header properly' );
     is( \@result, \@lines,            'Read file with header' );
     is( $linecnt, scalar(@lines) + 1, 'Return value is proper' );
+};
+
+subtest dolines_multifile_with_header => sub {
+    my @result;
+    @flret = ();
+
+    my $header;
+
+    my $byline = File::ByLine->new();
+    $byline->header_handler( sub { $header = $_ } );
+    $byline->file( [ "t/data/3lines-with-header.txt", "t/data/3lines.txt" ] );
+
+    my $lineno  = 0;
+    my $linecnt = $byline->do(
+        sub {
+            $lineno++;
+            my $line = shift;
+
+            push @result, $line;
+
+            is( $line, $_, "Line $lineno - Local \$_ and \$_[0] are the same" );
+        },
+    );
+
+    is( \@result, [ @lines, @lines ], 'Read 2x 3 line files' );
+    is( $linecnt, scalar(@lines) * 2 + 1, 'Return value is proper' );
 };
 
 subtest dolines_inline_with_filename => sub {
@@ -506,6 +551,20 @@ subtest readlines_object_with_header_handler => sub {
 
     is( \@result, \@lines,          'Read 3 line file' );
     is( $header,  $expected_header, 'Read header properly' );
+};
+
+subtest readlines_object_multifile_with_header => sub {
+    my $lineno = 0;
+
+    my $header;
+    my $byline = File::ByLine->new();
+    $byline->file( [ "t/data/3lines-with-header.txt", "t/data/3lines.txt" ] );
+    $byline->header_handler( sub { $header = $_ } );
+
+    my (@result) = $byline->lines();
+
+    is( \@result, [ @lines, @lines ], 'Read 2x 3 line files' );
+    is( $header, $expected_header, 'Read header properly' );
 };
 
 done_testing();
