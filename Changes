@@ -5,6 +5,7 @@
  * Preserve ordering for parallel map/grep multifile interfaces
  * Constructor accepts parameters now
  * Combine grep & map code
+ * Can pass file() attribute either arrayref or list of files
 
 1.181950  2018-07-13 21:14:47-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>

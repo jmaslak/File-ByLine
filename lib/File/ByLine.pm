@@ -487,14 +487,16 @@ Constructs a new object, suitable for the object oriented calls below.
 
   my $current_file = $byline->file();
   $byline->file("abc.txt");
+  $byline->file( [ "abc.txt", "def.txt" ] );
+  $byline->file( "$abc.txt", "def.txt" );
 
 Gets and sets the default filename used by the methods in the object oriented
 interface.  The default value is C<undef> which indicates that no default
 filename is provided.
 
-Instead of a single filename, an arrayref can be passed in, in which case the
-files are read in turn as if they are all one file. Note that if the file
-doesn't end in a newline, a newline is inserted before processing the next
+Instead of a single filename, a list or arrayref can be passed in, in which
+case the files are read in turn as if they are all one file. Note that if the
+file doesn't end in a newline, a newline is inserted before processing the next
 file.
 
 =head3 header_skip

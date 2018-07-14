@@ -1,6 +1,8 @@
 Todo Items:
 
   * Better checking of parameters for OO mode
+  * Seperate Attribute tests from 01-Basic.t (and 02-Parallel.t) into
+    04-attributes.t
   * UTF-8 and other encoding support
   * Support CRLF line endings on all platforms (:crlf)
   * Documentation on parallel_ that these methods do a SEEK_EOF, so you

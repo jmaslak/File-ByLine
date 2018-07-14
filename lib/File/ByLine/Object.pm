@@ -52,7 +52,7 @@ sub file {
         my $file = shift;
         return $self->{file} = $file;
     } else {
-        confess("Invalid call");
+        return $self->{file} = [@_];
     }
 }
 
@@ -209,7 +209,7 @@ sub grep {
     if ( scalar(@_) > 3 ) { confess "Invalid call, too many arguments"; }
     my ( $self, $code, $file ) = @_;
 
-    return $self->_grepmap('grep', $code, $file);
+    return $self->_grepmap( 'grep', $code, $file );
 }
 
 #
@@ -221,7 +221,7 @@ sub map {
     if ( scalar(@_) > 3 ) { confess "Invalid call, too many arguments"; }
     my ( $self, $code, $file ) = @_;
 
-    return $self->_grepmap('map', $code, $file);
+    return $self->_grepmap( 'map', $code, $file );
 }
 
 # Does the actual processing for map/grep
@@ -245,9 +245,9 @@ sub _grepmap {
 
     # Is this a MAP or a GREP?
     my $isgrep;
-    if ($type eq 'grep') {
+    if ( $type eq 'grep' ) {
         $isgrep = 1;
-    } elsif ($type eq 'map') {
+    } elsif ( $type eq 'map' ) {
         $isgrep = 0;
     } else {
         confess("Invalid type passed to _grepmap: $type");
@@ -256,7 +256,8 @@ sub _grepmap {
     if ( $procs > 1 ) {
         my $wu = Parallel::WorkUnit->new();
 
-        $wu->asyncs( $procs, sub { return $self->_grepmap_chunk( $code, $file, $isgrep, $procs, $_[0] ); } );
+        $wu->asyncs( $procs,
+            sub { return $self->_grepmap_chunk( $code, $file, $isgrep, $procs, $_[0] ); } );
 
         my @async_output = $wu->waitall();
 
@@ -418,7 +419,7 @@ sub _grepmap_chunk {
                 # Do nothing, we're skipping the header.
             } else {
                 if ($isgrep) {
-                    if ($code->($_)) {
+                    if ( $code->($_) ) {
                         push @filelines, $_;
                     }
                 } else {
