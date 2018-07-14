@@ -490,7 +490,7 @@ sub _require_parallel {
 
 # Validate something is code like
 #
-# Borrowed from Params::Util (written by Adam Kennedy)
+# Borrowed/modified from Params::Util (written by Adam Kennedy)
 sub _codelike {
     if ( scalar(@_) != 1 ) { confess 'invalid call' }
     my $thing = shift;
