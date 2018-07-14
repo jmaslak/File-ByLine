@@ -33,22 +33,22 @@ subtest no_params => sub {
 };
 
 subtest with_params_hash => sub {
-    my $byline = File::ByLine->new( { file => 'foo.txt', header_skip => 1, processes => 2 } );
+    my $byline = File::ByLine->new( { file => 'foo.txt', header_skip => 1, processes => 1 } );
     ok( defined($byline), "Object created" );
 
     is( $byline->file(),           'foo.txt', "File set" );
     is( $byline->header_handler(), undef,     "No header handler by default" );
-    is( $byline->processes,        2,         "Processes set to 2" );
+    is( $byline->processes,        1,         "Processes set to 1" );
     ok( $byline->header_skip(), "Header skip set" );
 };
 
 subtest with_params_list => sub {
-    my $byline = File::ByLine->new( file => 'foo.txt', header_skip => 1, processes => 2 );
+    my $byline = File::ByLine->new( file => 'foo.txt', header_skip => 1, processes => 1 );
     ok( defined($byline), "Object created" );
 
     is( $byline->file(),           'foo.txt', "File set" );
     is( $byline->header_handler(), undef,     "No header handler by default" );
-    is( $byline->processes,        2,         "Processes set to 2" );
+    is( $byline->processes,        1,         "Processes set to 1" );
     ok( $byline->header_skip(), "Header skip set" );
 };
 
