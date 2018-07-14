@@ -17,7 +17,7 @@ use autodie;
 
 use Carp;
 use Fcntl;
-use Scalar::Util qw(reftype);
+use Scalar::Util qw(blessed reftype);
 
 # We do this intentionally:
 ## no critic (Subroutines::ProhibitBuiltinHomonyms)
@@ -72,15 +72,15 @@ sub processes {
 #
 # Attribute Accessor - header_handler
 #
-# This is the code that handles the headder line
+# This is the code that handles the header line
 sub header_handler {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
         return $self->{header_handler};
     } elsif ( scalar(@_) == 1 ) {
         my $code = shift;
-        if ( defined( $_[0] ) ) {
-            if ( !_codelike( $code ) ) {
+        if ( defined($code) ) {
+            if ( !_codelike($code) ) {
                 confess("header_handler must be a code reference");
             }
             if ( $self->{header_skip} ) {
@@ -133,11 +133,11 @@ sub new {
 # Executes the provided code on every line.
 #
 sub do {
-    if (scalar(@_) < 2) { confess "Invalid call"; }
+    if ( scalar(@_) < 2 ) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
 
-    if (!defined($file)) { $file = $self->{file} };
-    if (!defined($file)) { confess "Must provide filename"; }
+    if ( !defined($file) ) { $file = $self->{file} }
+    if ( !defined($file) ) { confess "Must provide filename"; }
 
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header($file);
@@ -168,11 +168,11 @@ sub do {
 #
 # Finds and returns matching lines
 sub grep {
-    if (scalar(@_) < 2) { confess "Invalid call"; }
+    if ( scalar(@_) < 2 ) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
 
-    if (!defined($file)) { $file = $self->{file} };
-    if (!defined($file)) { confess "Must provide filename"; }
+    if ( !defined($file) ) { $file = $self->{file} }
+    if ( !defined($file) ) { confess "Must provide filename"; }
 
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header($file);
@@ -183,7 +183,7 @@ sub grep {
 
     my $procs = $self->{processes};
 
-    if ($procs > 1) {
+    if ( $procs > 1 ) {
         my $wu = Parallel::WorkUnit->new();
 
         $wu->asyncs( $procs, sub { return $self->_grep_chunk( $code, $file, $procs, $_[0] ); } );
@@ -201,11 +201,11 @@ sub grep {
 #
 # Applies function to each entry and returns that result
 sub map {
-    if (scalar(@_) < 2) { confess "Invalid call"; }
+    if ( scalar(@_) < 2 ) { confess "Invalid call"; }
     my ( $self, $code, $file ) = @_;
 
-    if (!defined($file)) { $file = $self->{file} };
-    if (!defined($file)) { confess "Must provide filename"; }
+    if ( !defined($file) ) { $file = $self->{file} }
+    if ( !defined($file) ) { confess "Must provide filename"; }
 
     if ( defined( $self->{header_handler} ) ) {
         my $header = $_ = $self->_read_header($file);
@@ -216,7 +216,7 @@ sub map {
 
     my $procs = $self->{processes};
 
-    if ($procs > 1) {
+    if ( $procs > 1 ) {
         my $wu = Parallel::WorkUnit->new();
 
         $wu->asyncs( $procs, sub { return $self->_map_chunk( $code, $file, $procs, $_[0] ); } );
@@ -234,11 +234,11 @@ sub map {
 #
 # Returns all lines in the file
 sub lines {
-    if (scalar(@_) < 1) { confess "Invalid call"; }
-    my ($self, $file) = @_;
+    if ( scalar(@_) < 1 ) { confess "Invalid call"; }
+    my ( $self, $file ) = @_;
 
-    if (!defined($file)) { $file = $self->{file} };
-    if (!defined($file)) { confess "Must provide filename"; }
+    if ( !defined($file) ) { $file = $self->{file} }
+    if ( !defined($file) ) { confess "Must provide filename"; }
 
     my @lines;
 
@@ -249,9 +249,9 @@ sub lines {
         $lineno++;
         chomp;
 
-        if ( ($lineno == 1) && defined( $self->{header_handler} ) ) {
+        if ( ( $lineno == 1 ) && defined( $self->{header_handler} ) ) {
             $self->{header_handler}($_);
-        } elsif ( ($lineno == 1) && $self->{header_skip} ) {
+        } elsif ( ( $lineno == 1 ) && $self->{header_skip} ) {
             # Do nothing;
         } else {
             push @lines, $_;
@@ -265,7 +265,7 @@ sub lines {
 
 # Internal function to read header line
 sub _read_header {
-    my ($self, $file) = @_;
+    my ( $self, $file ) = @_;
 
     my ( $fh, undef ) = _open_and_seek( $file, 1, 0 );
     my $line = <$fh>;
@@ -331,9 +331,9 @@ sub _grep_chunk {
 
         chomp;
 
-        if ( (!$part) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
+        if ( ( !$part ) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
             $self->{header_handler}($_);
-        } elsif ( (!$part) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
+        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
             # Do nothing, we're skipping the header.
         } else {
             if ( $code->($_) ) {
@@ -368,9 +368,9 @@ sub _map_chunk {
 
         chomp;
 
-        if ( (!$part) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
+        if ( ( !$part ) && ( $lineno == 1 ) && ( defined( $self->{header_handler} ) ) ) {
             $self->{header_handler}($_);
-        } elsif ( (!$part) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
+        } elsif ( ( !$part ) && ( $lineno == 1 ) && ( $self->{header_skip} ) ) {
             # Do nothing, we're skipping the header.
         } else {
             push @mapped_lines, $code->($_);
@@ -495,8 +495,8 @@ sub _codelike {
     if ( scalar(@_) != 1 ) { confess 'invalid call' }
     my $thing = shift;
 
-    if ( reftype($thing) ) { return 1; }
-    if ( blessed($thing) & overload::Method( $thing, '()' ) ) { return 1; }
+    if ( defined( reftype($thing) ) && ( reftype($thing) eq 'CODE' ) ) { return 1; }
+    if ( blessed($thing) && overload::Method( $thing, '&{}' ) ) { return 1; }
 
     return;
 }
