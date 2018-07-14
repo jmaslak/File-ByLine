@@ -15,5 +15,6 @@ Todo Items:
     temp file)
   * The header_handler function and header_skip should handle multi-line
     headers.
-  * Multi-file support
+  * Multi-file support - need to ensure that grep/map orders the lines
+    properly in parallel mode.
 
