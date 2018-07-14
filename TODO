@@ -15,6 +15,4 @@ Todo Items:
     temp file)
   * The header_handler function and header_skip should handle multi-line
     headers.
-  * Multiline should allow header handler to be called for each file
-    (this should not be the default behavior)
 
