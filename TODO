@@ -1,6 +1,5 @@
 Todo Items:
 
-  * Constructor should accept parameters
   * Better checking of parameters for OO mode
   * UTF-8 and other encoding support
   * Support CRLF line endings on all platforms (:crlf)

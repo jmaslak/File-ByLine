@@ -22,6 +22,16 @@ use Scalar::Util qw(blessed reftype);
 # We do this intentionally:
 ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 
+# Attributes and their accessors & defaults, used by the constructor
+# Each attribute name is the key of the hash, with the value being a
+# hashref of two values: accessor and default value.
+my (%ATTRIBUTE) = (
+    file           => [ \&file,           undef ],
+    header_handler => [ \&header_handler, undef ],
+    header_skip    => [ \&header_skip,    undef ],
+    processes      => [ \&processes,      1 ],
+);
+
 =head1 SEE File::ByLine
 
 Please consult File::ByLine for user-level documentation.  This interface is
@@ -117,12 +127,38 @@ sub header_skip {
 sub new {
     my $class = shift;
 
+    my %options;
+    if ( scalar(@_) == 1 ) {
+        # We assume this to be a hashref of options
+        %options = %{ $_[0] };
+    } elsif ( scalar(@_) > 1 ) {
+        if ( scalar(@_) % 2 ) {
+            confess("Must pass options in key/value form or as a hashref");
+        } else {
+            %options = (@_);
+        }
+    }
+
+    # Set defaults
     my $self = {};
-    $self->{header_handler} = undef;
-    $self->{header_skip}    = undef;
-    $self->{processes}      = 1;
+    foreach my $attr ( keys %ATTRIBUTE ) {
+        $self->{$attr} = $ATTRIBUTE{$attr}->[1];    # Default avlue
+    }
 
     bless $self, $class;
+
+    # Set attributes.  We use the accessor so we don't duplicate type
+    # checks.
+    foreach my $key ( sort keys %options ) {    # Sort for consistent tests
+        if ( exists( $ATTRIBUTE{$key} ) ) {
+            my $value = $options{$key};
+
+            # Call the accessor
+            $ATTRIBUTE{$key}->[0]( $self, $value );
+        } else {
+            confess("Invalid attribute: $key");
+        }
+    }
 
     return $self;
 }
@@ -579,6 +615,20 @@ sub _listlike {
     if ( defined( blessed($thing) ) && overload::Method( $thing, '[]' ) ) { return 1; }
 
     return;
+}
+
+# Takes a hashref, key, and default value
+# If the hashref item exists, returns the corresponding value.  If the hashref
+# item does not exist, returns the default value.
+sub _option_helper {
+    if ( scalar(@_) != 3 ) { confess 'invalid call' }
+    my ( $hash, $key, $default ) = @_;
+
+    if ( exists( $hash->{$key} ) ) {
+        return $hash->{$key};
+    } else {
+        return $default;
+    }
 }
 
 =head1 SUGGESTED DEPENDENCY
