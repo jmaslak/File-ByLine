@@ -216,7 +216,7 @@ sub do {
     if ( defined( $self->{header_handler} ) ) {
         my $fileno = 0;
         for my $f (@$file) {
-            my $header = $_ = $self->_read_header( $f, $fileno );
+            $self->_read_header( $f, $fileno );
             $fileno++;
         }
     }
@@ -272,12 +272,10 @@ sub _grepmap {
     if ( !defined($file) )   { confess "Must provide filename"; }
     if ( !_listlike($file) ) { $file = [$file] }
 
-    my $extended_info = $self->{extended_info};
-
     if ( defined( $self->{header_handler} ) ) {
         my $fileno = 0;
         for my $f (@$file) {
-            my $header = $_ = $self->_read_header( $f, $fileno );
+            $self->_read_header( $f, $fileno );
             $fileno++;
         }
     }
@@ -330,12 +328,9 @@ sub lines {
     my @lines;
     my $fileno        = 0;
     my $lineno        = 0;
-    my $extended_info = $self->{extended_info};
 
     for my $f (@$file) {
         $fileno++;
-
-        my $extended = $self->_extended( $f, 0 );
 
         open my $fh, '<', $f or die($!);
 
