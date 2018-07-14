@@ -22,7 +22,7 @@ use File::ByLine;
 use File::Temp qw(tempfile);
 
 my $expected_header = 'This is a header.';
-my $justaline = "Just A Line";
+my $justaline       = "Just A Line";
 my (@lines) = ( 'Line 1', 'Line 2', 'Line 3', );
 my $lc = 0;
 my @flret;
@@ -150,7 +150,7 @@ subtest parallel_dolines_multifile => sub {
     # Make sure that the code only sees each line once
     #
 
-    parallel_forlines [ "t/data/3lines.txt" ], 4, sub {
+    parallel_forlines ["t/data/3lines.txt"], 4, sub {
         my $line = shift;
 
         if ( $line eq 'Line 1' ) {
@@ -469,11 +469,26 @@ subtest parallel_maplines_none_and_two => sub {
         if ( $line eq 'Line 2' ) { return $line, $line; }
         if ( $line eq 'Line 3' ) { return $line; }
     }
-    "t/data/3lines.txt", 1;
+    "t/data/3lines.txt", 4;
 
     my (@expected) = ( $lines[1], $lines[1], $lines[2] );
 
     is( \@result, \@expected, 'Read 3 line file' );
+};
+
+subtest parallel_maplines_none_and_two_multifile => sub {
+    my @result = parallel_maplines {
+        my $line = shift;
+
+        if ( $line eq 'Line 1' ) { return; }
+        if ( $line eq 'Line 2' ) { return $line, $line; }
+        if ( $line eq 'Line 3' ) { return $line; }
+    }
+    [ "t/data/3lines.txt", "t/data/3lines.txt" ], 4;
+
+    my (@expected) = ( $lines[1], $lines[1], $lines[2] );
+
+    is( \@result, [ @expected, @expected ], 'Read 2x 3 line files' );
 };
 
 subtest parallel_greplines => sub {
@@ -499,6 +514,31 @@ subtest parallel_greplines => sub {
     "t/data/3lines.txt", 4;
 
     is( \@result, \@expected, 'Read 3 line file, 4 processes' );
+};
+
+subtest parallel_greplines_multifile => sub {
+    my @result = parallel_greplines {
+        my $line = shift;
+
+        if ( $line eq 'Line 1' ) { return; }
+        if ( $line eq 'Line 2' ) { return 1; }
+        if ( $line eq 'Line 3' ) { return 1; }
+    }
+    [ "t/data/3lines.txt", "t/data/3lines.txt" ], 1;
+
+    my (@expected) = grep { $_ ne 'Line 1' } @lines;
+    is( \@result, [ @expected, @expected ], 'Read 2x 3 line files, 1 process' );
+
+    @result = parallel_greplines {
+        my $line = shift;
+
+        if ( $line eq 'Line 1' ) { return; }
+        if ( $line eq 'Line 2' ) { return 1; }
+        if ( $line eq 'Line 3' ) { return 1; }
+    }
+    [ "t/data/3lines.txt", "t/data/3lines.txt" ], 4;
+
+    is( \@result, [ @expected, @expected ], 'Read 2x 3 line files, 4 processes' );
 };
 
 subtest parallel_greplines_large => sub {

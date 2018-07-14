@@ -190,11 +190,18 @@ sub grep {
 
         $wu->asyncs( $procs, sub { return $self->_grep_chunk( $code, $file, $procs, $_[0] ); } );
 
-        return map { @$_ } $wu->waitall();
+        my @async_output = $wu->waitall();
+
+        my @file_output;
+        for ( my $i = 0; $i < scalar(@$file); $i++ ) {
+            push @file_output, map { $_->[$i] } @async_output;
+        }
+        return map { @$_ } @file_output;
     } else {
         my $lines = $self->_grep_chunk( $code, $file, 1, 0 );
 
-        return @$lines;
+        # We get a hash ref map of the file
+        return map { @$_ } @$lines;
     }
 }
 
@@ -224,11 +231,17 @@ sub map {
 
         $wu->asyncs( $procs, sub { return $self->_map_chunk( $code, $file, $procs, $_[0] ); } );
 
-        return map { @$_ } $wu->waitall();
+        my @async_output = $wu->waitall();
+
+        my @file_output;
+        for ( my $i = 0; $i < scalar(@$file); $i++ ) {
+            push @file_output, map { $_->[$i] } @async_output;
+        }
+        return map { @$_ } @file_output;
     } else {
         my $mapped_lines = $self->_map_chunk( $code, $file, 1, 0 );
 
-        return @$mapped_lines;
+        return map { @$_ } @$mapped_lines;
     }
 }
 
@@ -354,6 +367,7 @@ sub _grep_chunk {
 
         my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
 
+        my @filelines;
         while (<$fh>) {
             $lineno++;
 
@@ -373,13 +387,14 @@ sub _grep_chunk {
                 # Do nothing, we're skipping the header.
             } else {
                 if ( $code->($_) ) {
-                    push @lines, $_;
+                    push @filelines, $_;
                 }
             }
 
             # If we're reading multi-parts, do we need to end the read?
             if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
         }
+        push @lines, \@filelines;
 
         close $fh;
     }
@@ -406,6 +421,7 @@ sub _map_chunk {
 
         my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
 
+        my @filelines;
         while (<$fh>) {
             $lineno++;
 
@@ -424,12 +440,13 @@ sub _map_chunk {
             {
                 # Do nothing, we're skipping the header.
             } else {
-                push @mapped_lines, $code->($_);
+                push @filelines, $code->($_);
             }
 
             # If we're reading multi-parts, do we need to end the read?
             if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
         }
+        push @mapped_lines, \@filelines;
 
         close $fh;
     }
@@ -559,7 +576,7 @@ sub _listlike {
     my $thing = shift;
 
     if ( reftype($thing) ) { return 1; }
-    if ( defined(blessed($thing)) && overload::Method( $thing, '[]' ) ) { return 1; }
+    if ( defined( blessed($thing) ) && overload::Method( $thing, '[]' ) ) { return 1; }
 
     return;
 }
