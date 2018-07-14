@@ -205,40 +205,11 @@ sub do {
 #
 # Finds and returns matching lines
 sub grep {
-    if ( scalar(@_) < 2 ) { confess "Invalid call"; }
+    if ( scalar(@_) < 2 ) { confess "Invalid call, too few arguments"; }
+    if ( scalar(@_) > 3 ) { confess "Invalid call, too many arguments"; }
     my ( $self, $code, $file ) = @_;
 
-    if ( !defined($file) )   { $file = $self->{file} }
-    if ( !defined($file) )   { confess "Must provide filename"; }
-    if ( !_listlike($file) ) { $file = [$file] }
-
-    if ( defined( $self->{header_handler} ) ) {
-        my $header = $_ = $self->_read_header( $file->[0] );
-        if ( defined($header) ) {
-            $self->{header_handler}($header);
-        }
-    }
-
-    my $procs = $self->{processes};
-
-    if ( $procs > 1 ) {
-        my $wu = Parallel::WorkUnit->new();
-
-        $wu->asyncs( $procs, sub { return $self->_grep_chunk( $code, $file, $procs, $_[0] ); } );
-
-        my @async_output = $wu->waitall();
-
-        my @file_output;
-        for ( my $i = 0; $i < scalar(@$file); $i++ ) {
-            push @file_output, map { $_->[$i] } @async_output;
-        }
-        return map { @$_ } @file_output;
-    } else {
-        my $lines = $self->_grep_chunk( $code, $file, 1, 0 );
-
-        # We get a hash ref map of the file
-        return map { @$_ } @$lines;
-    }
+    return $self->_grepmap('grep', $code, $file);
 }
 
 #
@@ -246,8 +217,18 @@ sub grep {
 #
 # Applies function to each entry and returns that result
 sub map {
-    if ( scalar(@_) < 2 ) { confess "Invalid call"; }
+    if ( scalar(@_) < 2 ) { confess "Invalid call, too few arguments"; }
+    if ( scalar(@_) > 3 ) { confess "Invalid call, too many arguments"; }
     my ( $self, $code, $file ) = @_;
+
+    return $self->_grepmap('map', $code, $file);
+}
+
+# Does the actual processing for map/grep
+sub _grepmap {
+    if ( scalar(@_) < 3 ) { confess "Invalid call, too few arguments"; }
+    if ( scalar(@_) > 4 ) { confess "Invalid call, too many arguments"; }
+    my ( $self, $type, $code, $file ) = @_;
 
     if ( !defined($file) )   { $file = $self->{file} }
     if ( !defined($file) )   { confess "Must provide filename"; }
@@ -262,10 +243,20 @@ sub map {
 
     my $procs = $self->{processes};
 
+    # Is this a MAP or a GREP?
+    my $isgrep;
+    if ($type eq 'grep') {
+        $isgrep = 1;
+    } elsif ($type eq 'map') {
+        $isgrep = 0;
+    } else {
+        confess("Invalid type passed to _grepmap: $type");
+    }
+
     if ( $procs > 1 ) {
         my $wu = Parallel::WorkUnit->new();
 
-        $wu->asyncs( $procs, sub { return $self->_map_chunk( $code, $file, $procs, $_[0] ); } );
+        $wu->asyncs( $procs, sub { return $self->_grepmap_chunk( $code, $file, $isgrep, $procs, $_[0] ); } );
 
         my @async_output = $wu->waitall();
 
@@ -275,10 +266,11 @@ sub map {
         }
         return map { @$_ } @file_output;
     } else {
-        my $mapped_lines = $self->_map_chunk( $code, $file, 1, 0 );
+        my $mapped_lines = $self->_grepmap_chunk( $code, $file, $isgrep, 1, 0 );
 
         return map { @$_ } @$mapped_lines;
     }
+
 }
 
 #
@@ -384,69 +376,18 @@ sub _forlines_chunk {
     return $lineno;
 }
 
-# Internal function to perform a grep on a single chunk of the file.
+# Internal function to perform a map/grep on a single chunk of the file.
 #
 # Procs should be >= 1.  It represents the number of chunks the file
 # has.
 #
 # Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
 # number this invocation is processing.
-sub _grep_chunk {
-    my ( $self, $code, $file, $procs, $part ) = @_;
-
-    my @lines;
-    my $fileno = 0;
-    my $lineno = 0;
-
-    for my $f (@$file) {
-        $fileno++;
-
-        my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
-
-        my @filelines;
-        while (<$fh>) {
-            $lineno++;
-
-            chomp;
-
-            if (   ( !$part )
-                && ( $fileno == 1 )
-                && ( $lineno == 1 )
-                && ( defined( $self->{header_handler} ) ) )
-            {
-                $self->{header_handler}($_);
-            } elsif ( ( !$part )
-                && ( $fileno == 1 )
-                && ( $lineno == 1 )
-                && ( $self->{header_skip} ) )
-            {
-                # Do nothing, we're skipping the header.
-            } else {
-                if ( $code->($_) ) {
-                    push @filelines, $_;
-                }
-            }
-
-            # If we're reading multi-parts, do we need to end the read?
-            if ( ( $end > 0 ) && ( tell($fh) > $end ) ) { last; }
-        }
-        push @lines, \@filelines;
-
-        close $fh;
-    }
-
-    return \@lines;
-}
-
-# Internal function to perform a map on a single chunk of the file.
 #
-# Procs should be >= 1.  It represents the number of chunks the file
-# has.
-#
-# Part should be >= 0 and < Procs.  It represents the zero-indexed chunk
-# number this invocation is processing.
-sub _map_chunk {
-    my ( $self, $code, $file, $procs, $part ) = @_;
+# isgrep = true if we want to just apply the code as a grep, not as a
+# map.
+sub _grepmap_chunk {
+    my ( $self, $code, $file, $isgrep, $procs, $part ) = @_;
 
     my @mapped_lines;
     my $fileno = 0;
@@ -476,7 +417,14 @@ sub _map_chunk {
             {
                 # Do nothing, we're skipping the header.
             } else {
-                push @filelines, $code->($_);
+                if ($isgrep) {
+                    if ($code->($_)) {
+                        push @filelines, $_;
+                    }
+                } else {
+                    # We are doing a map
+                    push @filelines, $code->($_);
+                }
             }
 
             # If we're reading multi-parts, do we need to end the read?

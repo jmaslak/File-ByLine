@@ -4,6 +4,7 @@
  * From 1.181950 Multifile Interface
  * Preserve ordering for parallel map/grep multifile interfaces
  * Constructor accepts parameters now
+ * Combine grep & map code
 
 1.181950  2018-07-13 21:14:47-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
