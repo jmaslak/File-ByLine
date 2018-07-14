@@ -54,5 +54,12 @@ subtest valid_file_attribute => sub {
     }
 };
 
+subtest invalid_file_attribute => sub {
+    my $byline = File::ByLine->new();
+    ok( defined($byline), "Object created" );
+
+    ok( dies { $byline->file(undef) }, "file() does not accept undef");
+};
+
 done_testing();
 

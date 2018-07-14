@@ -50,6 +50,7 @@ sub file {
         return $self->{file};
     } elsif ( scalar(@_) == 1 ) {
         my $file = shift;
+        if ( !defined($file) ) { confess("Must pass a file or array ref as a file attribute") }
         return $self->{file} = $file;
     } else {
         return $self->{file} = [@_];
