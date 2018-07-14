@@ -17,4 +17,7 @@ Todo Items:
     headers.
   * Multiline should allow header handler to be called for each file
     (this should not be the default behavior)
+  * Multiline should optionally pass the filename to user code. This
+    should be done as a hashref so that additional parameters can be
+    added over time.
 
