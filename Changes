@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+1.181950  2018-07-13 21:14:47-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
  * TRIAL/DEV RELEASE ONLY
  * Bugfix: Github Issue #5 - Don't allow non-coderef as header_handler
