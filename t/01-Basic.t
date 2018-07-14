@@ -120,8 +120,34 @@ subtest dolines_multifile_with_header => sub {
         },
     );
 
+    is( $header, $expected_header, 'Read header properly' );
     is( \@result, [ @lines, @lines ], 'Read 2x 3 line files' );
     is( $linecnt, scalar(@lines) * 2 + 1, 'Return value is proper' );
+
+    $extended = 0;
+};
+
+subtest dolines_multifile_with_headers => sub {
+    my @result;
+    @flret = ();
+
+    my %header;
+
+    my $byline = File::ByLine->new();
+
+    $extended = 1;
+    $byline->extended_info(1);
+
+    $byline->header_handler( sub { $header{ $_[1]->{filename} } = hh_sub(@_) } );
+    $byline->header_all_files(1);
+    $byline->file( [ "t/data/3lines-with-header.txt", "t/data/3lines.txt" ] );
+
+    my $lineno = 0;
+    my $linecnt = $byline->do( sub { line_sub(@_) } );
+
+    is( $header{"t/data/3lines-with-header.txt"},
+        $expected_header, 'Read header of first file properly' );
+    is( $header{"t/data/3lines.txt"}, $lines[0], 'Read header of second file properly' );
 
     $extended = 0;
 };

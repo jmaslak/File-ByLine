@@ -10,6 +10,7 @@
  * Better attribute checking
  * Pass extended information hash (when extended_info is true) to all
    user provided code references.
+ * Multifile Interface now allows header processing on a per-file basis
 
 1.181950  2018-07-13 21:14:47-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>

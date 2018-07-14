@@ -26,11 +26,12 @@ use Scalar::Util qw(blessed reftype);
 # Each attribute name is the key of the hash, with the value being a
 # hashref of two values: accessor and default value.
 my (%ATTRIBUTE) = (
-    file           => [ \&file,           undef ],
-    extended_info  => [ \&extended_info,  undef ],
-    header_handler => [ \&header_handler, undef ],
-    header_skip    => [ \&header_skip,    undef ],
-    processes      => [ \&processes,      1 ],
+    file             => [ \&file,             undef ],
+    extended_info    => [ \&extended_info,    undef ],
+    header_all_files => [ \&header_all_files, undef ],
+    header_handler   => [ \&header_handler,   undef ],
+    header_skip      => [ \&header_skip,      undef ],
+    processes        => [ \&processes,        1 ],
 );
 
 =head1 SEE File::ByLine
@@ -95,6 +96,21 @@ sub processes {
             $self->_require_parallel();
         }
         return $self->{processes} = $procs;
+    } else {
+        confess("Invalid call");
+    }
+}
+
+#
+# Attribute Accessor - header_all_files
+#
+# If set to one, process all files for headers
+sub header_all_files {
+    my ($self) = shift;
+    if ( scalar(@_) == 0 ) {
+        return $self->{header_all_files};
+    } elsif ( scalar(@_) == 1 ) {
+        return $self->{header_all_files} = $_[0];
     } else {
         confess("Invalid call");
     }
@@ -197,17 +213,11 @@ sub do {
     if ( !defined($file) )   { confess "Must provide filename"; }
     if ( !_listlike($file) ) { $file = [$file] }
 
-    my $extended_info = $self->{extended_info};
-
     if ( defined( $self->{header_handler} ) ) {
-        my $header = $_ = $self->_read_header( $file->[0] );
-        if ( defined($header) ) {
-            if ($extended_info) {
-                my $extended = $self->_extended( $file->[0], 0 );
-                $self->{header_handler}( $header, $extended );
-            } else {
-                $self->{header_handler}($header);
-            }
+        my $fileno = 0;
+        for my $f (@$file) {
+            my $header = $_ = $self->_read_header( $f, $fileno );
+            $fileno++;
         }
     }
 
@@ -265,14 +275,10 @@ sub _grepmap {
     my $extended_info = $self->{extended_info};
 
     if ( defined( $self->{header_handler} ) ) {
-        my $header = $_ = $self->_read_header( $file->[0] );
-        if ( defined($header) ) {
-            if ($extended_info) {
-                my $extended = $self->_extended( $file->[0], 0 );
-                $self->{header_handler}( $header, $extended );
-            } else {
-                $self->{header_handler}($header);
-            }
+        my $fileno = 0;
+        for my $f (@$file) {
+            my $header = $_ = $self->_read_header( $f, $fileno );
+            $fileno++;
         }
     }
 
@@ -337,17 +343,13 @@ sub lines {
             $lineno++;
             chomp;
 
-            if ( ( $fileno == 1 ) && ( $lineno == 1 ) && defined( $self->{header_handler} ) ) {
-                if ($extended_info) {
-                    $self->{header_handler}( $_, $extended );
-                } else {
-                    $self->{header_handler}($_);
+            if ($lineno == 1) {
+                if ( $self->_handle_header($f, $_, 0, $fileno-1) ) {
+                    next;
                 }
-            } elsif ( ( $fileno == 1 ) && ( $lineno == 1 ) && $self->{header_skip} ) {
-                # Do nothing;
-            } else {
-                push @lines, $_;
             }
+
+            push @lines, $_;
         }
 
         close $fh;
@@ -356,15 +358,19 @@ sub lines {
     return @lines;
 }
 
-# Internal function to read header line
+# Internal function to read header line (if we need to)
 sub _read_header {
-    my ( $self, $file ) = @_;
+    my ( $self, $file, $fileno ) = @_;
 
     my ( $fh, undef ) = _open_and_seek( $file, 1, 0 );
     my $line = <$fh>;
     close $fh;
 
-    chomp($line) if defined $line;
+    if (defined($line)) {
+        chomp($line);
+        $self->_handle_header($file, $line, 0, $fileno);
+    }
+
     return $line;
 }
 
@@ -395,19 +401,8 @@ sub _forlines_chunk {
 
             chomp;
 
-            # Handle header option
-            if (   ( !$part )
-                && ( $fileno == 1 )
-                && ( $lineno == 1 )
-                && ( defined( $self->{header_handler} ) ) )
-            {
-                # Do nothing, we're skipping the header.
-            } elsif ( ( !$part )
-                && ( $fileno == 1 )
-                && ( $lineno == 1 )
-                && ( $self->{header_skip} ) )
-            {
-                # Do nothing, we're skipping the header.
+            if ($lineno == 1 && $self->_handle_header($f, $_, $part, $fileno-1) ) {
+                # Do nothing, we handled the header.
             } else {
                 if ($extended_info) {
                     $code->( $_, $extended );
@@ -457,12 +452,8 @@ sub _grepmap_chunk {
 
             chomp;
 
-            if (   ( !$part )
-                && ( $fileno == 1 )
-                && ( $lineno == 1 )
-                && ( defined( $self->{header_handler} ) ) )
-            {
-                # Do nothing, we're skipping the header.
+            if ($lineno == 1 && $self->_handle_header($f, $_, $part, $fileno-1) ) {
+                # Do nothing, we handled the header.
             } elsif ( ( !$part )
                 && ( $fileno == 1 )
                 && ( $lineno == 1 )
@@ -472,7 +463,7 @@ sub _grepmap_chunk {
             } else {
                 if ($isgrep) {
                     if ($extended_info) {
-                        if ( $code->($_, $extended) ) {
+                        if ( $code->( $_, $extended ) ) {
                             push @filelines, $_;
                         }
                     } else {
@@ -666,6 +657,50 @@ sub _extended {
         object         => $self,
         process_number => $process_number,
     };
+}
+
+# Executes the header_handler function when required, or skipps headers.
+#
+# This returns TRUE if there is a header to process.  FALSE otherwise
+#
+# This takes several parameters:
+#   $self - This is an object method of course.
+#   $filename = The filename being processed
+#   $line - The line to process
+#   $part - Which "part" is calling this (we always return FALSE and
+#           refuse to process the header if $part > 0)
+#   $fileno - Which file number are we on (start at zero)
+#
+# If header_skip is FALSE and header_handler is unset, this ALWAYS
+# returns false.
+#
+# This should never be called except for the first line of a file
+sub _handle_header {
+    if (scalar(@_) != 5) { confess 'invalid call' }
+    my ($self, $filename, $line, $part, $fileno) = @_;
+
+    if ($part) { return; }
+
+    if ( (! $self->header_skip()) && (!defined($self->header_handler())) ) {
+        return;
+    }
+
+    if ($fileno && (!$self->header_all_files())) {
+        return;
+    }
+
+    # We have a header to process.
+    if (defined($self->header_handler())) {
+        local $_ = $line;
+
+        if ($self->{extended_info}) {
+            my $extended = $self->_extended( $filename, $part );
+            $self->{header_handler}( $line, $extended );
+        } else {
+            $self->{header_handler}( $line );
+        }
+    }
+    return 1;
 }
 
 =head1 SUGGESTED DEPENDENCY

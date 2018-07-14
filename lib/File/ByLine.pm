@@ -527,15 +527,18 @@ case the files are read in turn as if they are all one file. Note that if the
 file doesn't end in a newline, a newline is inserted before processing the next
 file.
 
-=head3 header_skip
+=head3 header_all_files
 
-  $byline->header_skip(1);
+  $byline->header_all_files(1);
 
-Gets and sets whether the object oriented methods will skip the first line
-in the file (which you might want to do for a line that is a header).  This
-defaults to false.  Any true value will cause the header line to be skipped.
+Gets and sets whether the object oriented methods will call C<header_handler>
+for every file if multiple files are passed into the C<file> attribute.
 
-You cannot set this to true while a C<header_handler> value is set.
+The anticipated usage of this would be with C<extended_info> set to true, with
+the C<header_handler> function examining the C<filename> attribute of the
+extended info hashref.  Note that all headers may be read before any line in
+any file is read, to better accommodate parallel code execution.  I.E. the
+headers of all files may be read at once before any data line is read.
 
 =head3 header_handler
 

@@ -80,5 +80,17 @@ subtest extended_info => sub {
     ok( !$byline->extended_info(),      "extended_info contains false" );
 };
 
+
+subtest header_all_files => sub {
+    my $byline = File::ByLine->new();
+    ok( defined($byline), "Object created" );
+
+    ok( !$byline->header_all_files(), "header_all_files defaults to false" );
+
+    ok( $byline->header_all_files(1),      "header_all_files set to true" );
+    ok( $byline->header_all_files(),       "header_all_files contains true" );
+    ok( !$byline->header_all_files(undef), "header_all_files set to false" );
+    ok( !$byline->header_all_files(),      "header_all_files contains false" );
+};
 done_testing();
 
