@@ -17,34 +17,6 @@ use Test2::V0;
 
 use File::ByLine;
 
-package overloadcode {
-    use overload '&{}' => \&mysub;
-
-    sub new {
-        my $self = {};
-        bless $self;
-        return $self;
-    }
-
-    sub mysub {
-        return sub { return 1 };
-    }
-};
-
-package overloadarray {
-    use overload '@{}' => \&myarr;
-
-    sub new {
-        my $self = {};
-        bless $self;
-        return $self;
-    }
-
-    sub myarr {
-        return [];
-    }
-};
-
 my $arraylike = overloadarray->new();
 my $codelike  = overloadcode->new();
 
@@ -58,3 +30,33 @@ ok dies { $byline->header_handler($arraylike) }, "Overloaded arrayref dies";
 
 done_testing();
 
+# DONE - below are the packages used
+
+package overloadcode;
+
+use overload '&{}' => \&mysub;
+
+sub new {
+    my $self = {};
+    bless $self;
+    return $self;
+}
+
+sub mysub {
+    return sub { return 1 };
+}
+
+
+package overloadarray;
+
+use overload '@{}' => \&myarr;
+
+sub new {
+    my $self = {};
+    bless $self;
+    return $self;
+}
+
+sub myarr {
+    return [];
+}
