@@ -644,6 +644,27 @@ subtest readlines_object_multifile_with_header => sub {
     $extended = 0;
 };
 
+subtest readlines_object_multifile_with_badfile => sub {
+    my $lineno = 0;
+
+    my $header;
+    my $byline = File::ByLine->new();
+    $byline->file( [ "t/data/3lines-with-header.txt", "t/data/does-not-exist.txt", "t/data/3lines.txt" ] );
+
+    $extended = 1;
+    $byline->extended_info(1);
+    $byline->skip_unreadable(1);
+
+    $byline->header_handler( sub { $header = hh_sub(@_) } );
+
+    my (@result) = $byline->lines();
+
+    is( \@result, [ @lines, @lines ], 'Read 2x 3 line files' );
+    is( $header, $expected_header, 'Read header properly' );
+
+    $extended = 0;
+};
+
 done_testing();
 
 sub hh_sub {

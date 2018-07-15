@@ -1,6 +1,7 @@
 {{$NEXT}}
  Joelle Maslak <jmaslak@antelope.net>
  * Improve diagnostic output on file permission/existance
+ * Add skip_unreadable attribute, to skip over unreadable files
 
 1.181962  2018-07-14 21:02:00-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>

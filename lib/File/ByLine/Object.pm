@@ -32,6 +32,7 @@ my (%ATTRIBUTE) = (
     header_handler   => [ \&header_handler,   undef ],
     header_skip      => [ \&header_skip,      undef ],
     processes        => [ \&processes,        1 ],
+    skip_unreadable  => [ \&skip_unreadable,  undef ],
 );
 
 =head1 SEE File::ByLine
@@ -153,6 +154,20 @@ sub header_skip {
             confess("Must undefine header_handler before setting header_skip");
         }
         return $self->{header_skip} = $_[0];
+    } else {
+        confess("Invalid call");
+    }
+}
+
+#
+# Attribute Accessor - skip_unreadable
+#
+sub skip_unreadable {
+    my ($self) = shift;
+    if ( scalar(@_) == 0 ) {
+        return $self->{skip_unreadable};
+    } elsif ( scalar(@_) == 1 ) {
+        return $self->{skip_unreadable} = !!$_[0];    # !! to convert to fast boolean
     } else {
         confess("Invalid call");
     }
@@ -333,6 +348,7 @@ sub lines {
         $fileno++;
 
         my $fh = $self->_open($f);
+        if ( !defined($fh) ) { next; }    # Next file
 
         while (<$fh>) {
             $lineno++;
@@ -358,6 +374,7 @@ sub _read_header {
     my ( $self, $file, $fileno ) = @_;
 
     my ( $fh, undef ) = $self->_open_and_seek( $file, 1, 0 );
+    if ( !defined($fh) ) { return; }
     my $line = <$fh>;
     close $fh;
 
@@ -390,6 +407,7 @@ sub _forlines_chunk {
 
         my $procs = $self->{processes};
         my ( $fh, $end ) = $self->_open_and_seek( $f, $procs, $part );
+        if ( !defined($fh) ) { next; }    # Next file
 
         while (<$fh>) {
             $lineno++;
@@ -440,6 +458,8 @@ sub _grepmap_chunk {
         my $extended = $self->_extended( $f, $part );
 
         my ( $fh, $end ) = $self->_open_and_seek( $f, $procs, $part );
+        if ( !defined($fh) ) { push @mapped_lines, []; next; }
+        ;    # Go to next loop
 
         my @filelines;
         while (<$fh>) {
@@ -526,6 +546,7 @@ sub _open_and_seek {
     }
 
     my $fh = $self->_open($file);
+    if ( !defined($fh) ) { return ( $fh, 0 ); }
 
     # If this is a single part request, we are done here.
     # We use -1, not size, because it's possible the read is from a
@@ -581,9 +602,11 @@ sub _open {
     if ( scalar(@_) != 2 ) { confess 'invalid call'; }
     my ( $self, $file ) = @_;
 
-    if ( !-e $file ) {
+    if ( ( !-r $file ) && $self->{skip_unreadable} ) {
+        return;    # We don't give an error if skip_unreadable
+    } elsif ( !-e _ ) {    # _ is file handle from last stat() call
         confess("File does not exist: $file");
-    } elsif ( !-r _ ) {    # _ is file handle from last stat() call
+    } elsif ( !-r _ ) {
         confess("File is unreadable: $file");
     }
     open my $fh, '<', $file or die $!;

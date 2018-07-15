@@ -91,5 +91,18 @@ subtest header_all_files => sub {
     ok( !$byline->header_all_files(undef), "header_all_files set to false" );
     ok( !$byline->header_all_files(),      "header_all_files contains false" );
 };
+
+subtest skip_unreadable => sub {
+    my $byline = File::ByLine->new();
+    ok( defined($byline), "Object created" );
+
+    ok( !$byline->skip_unreadable(), "skip_unreadable defaults to false" );
+
+    ok( $byline->skip_unreadable(1),      "skip_unreadable set to true" );
+    ok( $byline->skip_unreadable(),       "skip_unreadable contains true" );
+    ok( !$byline->skip_unreadable(undef), "skip_unreadable set to false" );
+    ok( !$byline->skip_unreadable(),      "skip_unreadable contains false" );
+};
+
 done_testing();
 

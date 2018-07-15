@@ -571,6 +571,17 @@ process.  Specifying C<2> or greater will use multiple processes to operate
 on the file (see documentation for the parallel_* functions described above
 for more details).
 
+=head3 skip_unreadable
+
+  my $unreadable = $byline->skip_unreadable();
+  $byline->skip_unreadable(10);
+
+This was added in version 1.181960.
+
+If this attribute is true, unreadable files are treated as empty files during
+processing.  The default is false, in which case an exception is thrown when
+an access attempt is made to an unreadable file.
+
 =head2 METHODS
 
 =head3 do
