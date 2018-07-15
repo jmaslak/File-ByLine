@@ -583,8 +583,8 @@ sub _require_parallel {
     require Parallel::WorkUnit
       or die("You must install Parallel::WorkUnit to use the parallel_* methods");
 
-    if ( $Parallel::WorkUnit::VERSION < 1.117 ) {
-        die( "Parallel::WorkUnit version 1.117 or newer required. You have "
+    if ( $Parallel::WorkUnit::VERSION < 2.181850 ) {
+        die( "Parallel::WorkUnit version 2.181850 or newer required. You have "
               . $Parallel::WorkUnit::Version );
     }
 
