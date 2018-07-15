@@ -8,7 +8,7 @@ File::ByLine - Line-by-line file access loops
 
 =head1 VERSION
 
-version 1.181951
+version 1.181962
 
 =head1 SYNOPSIS
 
