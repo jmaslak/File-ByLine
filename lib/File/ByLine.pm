@@ -485,9 +485,10 @@ Constructs a new object, suitable for the object oriented calls below.
 
 =head3 extended_info
 
+  $extended = $byline->extended_info();
   $byline->extended_info(1);
 
-This was added in 1.181951.
+This was added in version 1.181951.
 
 Gets and sets the "extended information" flag.  This defaults to false, but
 if set to a true value this will pass a second parameter to all user-defined
@@ -513,7 +514,7 @@ should be modified within user code.
 
 =head3 file
 
-  my $current_file = $byline->file();
+  my $file = $byline->file();
   $byline->file("abc.txt");
   $byline->file( [ "abc.txt", "def.txt" ] );
   $byline->file( "$abc.txt", "def.txt" );
@@ -529,6 +530,7 @@ file.
 
 =head3 header_all_files
 
+  my $all_files = $byline->header_all_files();
   $byline->header_all_files(1);
 
 Gets and sets whether the object oriented methods will call C<header_handler>
@@ -542,6 +544,7 @@ headers of all files may be read at once before any data line is read.
 
 =head3 header_handler
 
+  my $handler = $byline->header_handler();
   $byline->header_handler( sub { ... } );
 
 Specifies code that should be executed on the header row of the input file.
