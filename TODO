@@ -15,4 +15,7 @@ Todo Items:
     temp file)
   * The header_handler function and header_skip should handle multi-line
     headers.
+  * Multifile mode should support globbing
+  * Allow long attributes to be abbreviated (ei = extended_info, f =
+    file, etc)
 
