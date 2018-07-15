@@ -639,7 +639,7 @@ sub _is_number {
             [0-9]+          # ASCII digit
             (?: \. 0+)?     # Optional .0 or .000 or .00000 etc
             \z              # End of string
-        /sxx;
+        /sx;
 }
 
 # Returns an extended info object
