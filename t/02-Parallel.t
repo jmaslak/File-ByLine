@@ -44,6 +44,10 @@ subtest parallel_dolines => sub {
     my ( $fh2, $fn2 ) = tempfile();
     my ( $fh3, $fn3 ) = tempfile();
 
+    diag "PDL 1: $fn1";
+    diag "PDL 2: $fn2";
+    diag "PDL 3: $fn3";
+
     #
     # Make sre that we call the code for each line
     #
