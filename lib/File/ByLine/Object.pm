@@ -326,13 +326,13 @@ sub lines {
     if ( !_listlike($file) ) { $file = [$file] }
 
     my @lines;
-    my $fileno        = 0;
-    my $lineno        = 0;
+    my $fileno = 0;
+    my $lineno = 0;
 
     for my $f (@$file) {
         $fileno++;
 
-        open my $fh, '<', $f or die($!);
+        my $fh = $self->_open($f);
 
         while (<$fh>) {
             $lineno++;
@@ -357,7 +357,7 @@ sub lines {
 sub _read_header {
     my ( $self, $file, $fileno ) = @_;
 
-    my ( $fh, undef ) = _open_and_seek( $file, 1, 0 );
+    my ( $fh, undef ) = $self->_open_and_seek( $file, 1, 0 );
     my $line = <$fh>;
     close $fh;
 
@@ -389,7 +389,7 @@ sub _forlines_chunk {
         my $extended = $self->_extended( $f, $part );
 
         my $procs = $self->{processes};
-        my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
+        my ( $fh, $end ) = $self->_open_and_seek( $f, $procs, $part );
 
         while (<$fh>) {
             $lineno++;
@@ -439,7 +439,7 @@ sub _grepmap_chunk {
 
         my $extended = $self->_extended( $f, $part );
 
-        my ( $fh, $end ) = _open_and_seek( $f, $procs, $part );
+        my ( $fh, $end ) = $self->_open_and_seek( $f, $procs, $part );
 
         my @filelines;
         while (<$fh>) {
@@ -509,7 +509,8 @@ sub _grepmap_chunk {
 # If no lines would start in a given chunk, this seeks to the end of the
 # file (so it gives an EOF on the first read)
 sub _open_and_seek {
-    my ( $file, $parts, $part_number ) = @_;
+    if ( scalar(@_) != 4 ) { confess 'invalid call' }
+    my ( $self, $file, $parts, $part_number ) = @_;
 
     if ( !defined($parts) )       { $parts       = 1; }
     if ( !defined($part_number) ) { $part_number = 0; }
@@ -524,7 +525,7 @@ sub _open_and_seek {
         confess("Part Number must be greater or equal to 0");
     }
 
-    open my $fh, '<', $file or die($!);
+    my $fh = $self->_open($file);
 
     # If this is a single part request, we are done here.
     # We use -1, not size, because it's possible the read is from a
@@ -574,6 +575,20 @@ sub _open_and_seek {
 
     # We return the file at this position.
     return ( $fh, $end );
+}
+
+sub _open {
+    if ( scalar(@_) != 2 ) { confess 'invalid call'; }
+    my ( $self, $file ) = @_;
+
+    if ( !-e $file ) {
+        confess("File does not exist: $file");
+    } elsif ( !-r _ ) {    # _ is file handle from last stat() call
+        confess("File is unreadable: $file");
+    }
+    open my $fh, '<', $file or die $!;
+
+    return $fh;
 }
 
 sub _require_parallel {
