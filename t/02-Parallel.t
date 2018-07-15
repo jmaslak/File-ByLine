@@ -77,6 +77,10 @@ subtest parallel_dolines => sub {
     close $fh2;
     close $fh3;
 
+    unlink $fn1;
+    unlink $fn2;
+    unlink $fn3;
+
     chomp($l1);
     chomp($l2);
     chomp($l3);
@@ -85,26 +89,6 @@ subtest parallel_dolines => sub {
     is( $l2,      $lines[1],      'Line 1 correct' );
     is( $l3,      $lines[2],      'Line 2 correct' );
     is( $linecnt, scalar(@lines), 'Return value is proper' );
-
-    #
-    # Make sure that the code only sees each line once
-    #
-
-    parallel_forlines "t/data/3lines.txt", 4, sub {
-        my $line = shift;
-
-        if ( $line eq 'Line 1' ) {
-            unlink $fn1 or die($!);
-        } elsif ( $line eq 'Line 2' ) {
-            unlink $fn2 or die($!);
-        } elsif ( $line eq 'Line 3' ) {
-            unlink $fn3 or die($!);
-        }
-    };
-
-    ok( !-f $fn1, "FN1 Deleted" );
-    ok( !-f $fn2, "FN2 Deleted" );
-    ok( !-f $fn3, "FN3 Deleted" );
 };
 
 subtest parallel_dolines_multifile => sub {
