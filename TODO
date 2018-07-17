@@ -17,4 +17,10 @@ Todo Items:
   * The header_handler function and header_skip should handle multi-line
     headers.
   * Multifile mode should support globbing
+  * Multifile mode should allow parallization on either file (multiple
+    threads reading one file) or on the list of files.
+  * Document interaction with AnyEvent
+  * Method in map/dofile/grep that says "Don't process any more lines of
+    this file" and "don't process any more lines of any file"
+  * Grep that returns name of file rather than line that matched
 
