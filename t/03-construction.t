@@ -41,6 +41,7 @@ subtest with_params_hash => sub {
             file             => 'foo.txt',
             extended_info    => 1,
             header_all_files => 1,
+            header_handler   => undef,
             header_skip      => 1,
             processes        => 1,
             skip_unreadable  => 1
