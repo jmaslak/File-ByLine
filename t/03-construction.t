@@ -58,6 +58,29 @@ subtest with_params_hash => sub {
     ok( $byline->skip_unreadable(),  "Skip unreadable set" );
 };
 
+subtest with_param_abbrev_hash => sub {
+    my $byline = File::ByLine->new(
+        {
+            f   => 'foo.txt',
+            ei  => 1,
+            haf => 1,
+            hh  => undef,
+            hs  => 1,
+            p   => 1,
+            su  => 1
+        }
+    );
+    ok( defined($byline), "Object created" );
+
+    is( $byline->file(),           'foo.txt', "File set" );
+    is( $byline->header_handler(), undef,     "No header handler by default" );
+    is( $byline->processes,        1,         "Processes set to 1" );
+    ok( $byline->extended_info(),    "Extended info set" );
+    ok( $byline->header_all_files(), "Header processed for all files" );
+    ok( $byline->header_skip(),      "Header skip set" );
+    ok( $byline->skip_unreadable(),  "Skip unreadable set" );
+};
+
 subtest with_params_list => sub {
     my $byline = File::ByLine->new(
         file             => 'foo.txt',

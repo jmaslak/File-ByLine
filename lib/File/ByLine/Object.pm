@@ -26,13 +26,13 @@ use Scalar::Util qw(blessed reftype);
 # Each attribute name is the key of the hash, with the value being a
 # hashref of two values: accessor and default value.
 my (%ATTRIBUTE) = (
-    file             => [ \&file,             undef ],
-    extended_info    => [ \&extended_info,    undef ],
-    header_all_files => [ \&header_all_files, undef ],
-    header_handler   => [ \&header_handler,   undef ],
-    header_skip      => [ \&header_skip,      undef ],
-    processes        => [ \&processes,        1 ],
-    skip_unreadable  => [ \&skip_unreadable,  undef ],
+    file             => [ \&file,             undef, ['f'] ],
+    extended_info    => [ \&extended_info,    undef, ['ei'] ],
+    header_all_files => [ \&header_all_files, undef, ['haf'] ],
+    header_handler   => [ \&header_handler,   undef, ['hh'] ],
+    header_skip      => [ \&header_skip,      undef, ['hs'] ],
+    processes        => [ \&processes,        1,     ['p'] ],
+    skip_unreadable  => [ \&skip_unreadable,  undef, ['su'] ],
 );
 
 =head1 SEE File::ByLine
@@ -45,6 +45,8 @@ documented there.
 #
 # Attribute Accessor - file
 #
+sub f { goto &file }
+
 sub file {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -62,6 +64,8 @@ sub file {
 # Attribute Accessor - extended_info
 #
 # Do we pass an extended information hash to the user process?
+sub ei { goto &extended_info }
+
 sub extended_info {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -78,6 +82,8 @@ sub extended_info {
 #
 # This is the degree of parallism we will attempt for most methods (the
 # exception is "lines()")
+sub p { goto &processes }
+
 sub processes {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -106,6 +112,8 @@ sub processes {
 # Attribute Accessor - header_all_files
 #
 # If set to one, process all files for headers
+sub haf { goto &header_all_files }
+
 sub header_all_files {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -121,6 +129,8 @@ sub header_all_files {
 # Attribute Accessor - header_handler
 #
 # This is the code that handles the header line
+sub hh { goto &header_handler }
+
 sub header_handler {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -145,6 +155,8 @@ sub header_handler {
 # Attribute Accessor - header_skip
 #
 # If set to one, skip the header line
+sub hs { goto &header_skip }
+
 sub header_skip {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -162,6 +174,8 @@ sub header_skip {
 #
 # Attribute Accessor - skip_unreadable
 #
+sub su { goto &skip_unreadable; }
+
 sub skip_unreadable {
     my ($self) = shift;
     if ( scalar(@_) == 0 ) {
@@ -199,14 +213,40 @@ sub new {
 
     bless $self, $class;
 
+    # Build abbreviation list
+    my (%attr_short);
+    foreach my $attr ( keys %ATTRIBUTE ) {
+        foreach my $abbr ( @{ $ATTRIBUTE{$attr}->[2] } ) {
+            $attr_short{$abbr} = $attr;             # Default avlue
+        }
+    }
+
     # Set attributes.  We use the accessor so we don't duplicate type
     # checks.
+    my %set;    # Track set attributes
     foreach my $key ( sort keys %options ) {    # Sort for consistent tests
         if ( exists( $ATTRIBUTE{$key} ) ) {
+            if ( exists( $set{$key} ) ) {
+                confess("Duplicate attribute in constructor detected: $key");
+            }
+
             my $value = $options{$key};
 
             # Call the accessor
             $ATTRIBUTE{$key}->[0]( $self, $value );
+            $set{$key} = 1;                     # Mark as set
+        } elsif ( exists( $attr_short{$key} ) ) {
+            my $cannonical = $attr_short{$key};
+
+            if ( exists( $set{$key} ) ) {
+                confess("Duplicate attribute in constructor detected: $key");
+            }
+
+            my $value = $options{$key};
+
+            # Call the accessor
+            $ATTRIBUTE{$cannonical}->[0]( $self, $value );
+            $set{$key} = 1;                     # Mark as set
         } else {
             confess("Invalid attribute: $key");
         }

@@ -8,7 +8,7 @@ File::ByLine - Line-by-line file access loops
 
 =head1 VERSION
 
-version 1.181962
+version 1.181980
 
 =head1 SYNOPSIS
 
@@ -340,9 +340,11 @@ Constructs a new object, suitable for the object oriented calls below.
 
 =head3 extended_info
 
+  $extended = $byline->extended_info();
   $byline->extended_info(1);
+  $byline->ei(1);  # ei() is an alias for extended_info()
 
-This was added in 1.181951.
+This was added in version 1.181951.
 
 Gets and sets the "extended information" flag.  This defaults to false, but
 if set to a true value this will pass a second parameter to all user-defined
@@ -368,7 +370,7 @@ should be modified within user code.
 
 =head3 file
 
-  my $current_file = $byline->file();
+  my $file = $byline->file();
   $byline->file("abc.txt");
   $byline->file( [ "abc.txt", "def.txt" ] );
   $byline->file( "$abc.txt", "def.txt" );
@@ -384,6 +386,7 @@ file.
 
 =head3 header_all_files
 
+  my $all_files = $byline->header_all_files();
   $byline->header_all_files(1);
 
 Gets and sets whether the object oriented methods will call C<header_handler>
@@ -397,6 +400,7 @@ headers of all files may be read at once before any data line is read.
 
 =head3 header_handler
 
+  my $handler = $byline->header_handler();
   $byline->header_handler( sub { ... } );
 
 Specifies code that should be executed on the header row of the input file.
@@ -425,6 +429,17 @@ default degree is C<1>, which indicates all tasks should only use a single
 process.  Specifying C<2> or greater will use multiple processes to operate
 on the file (see documentation for the parallel_* functions described above
 for more details).
+
+=head3 skip_unreadable
+
+  my $unreadable = $byline->skip_unreadable();
+  $byline->skip_unreadable(10);
+
+This was added in version 1.181960.
+
+If this attribute is true, unreadable files are treated as empty files during
+processing.  The default is false, in which case an exception is thrown when
+an access attempt is made to an unreadable file.
 
 =head2 METHODS
 

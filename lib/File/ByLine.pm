@@ -579,11 +579,26 @@ for more details).
   my $unreadable = $byline->skip_unreadable();
   $byline->skip_unreadable(10);
 
-This was added in version 1.181960.
+This was added in version 1.181980.
 
 If this attribute is true, unreadable files are treated as empty files during
 processing.  The default is false, in which case an exception is thrown when
 an access attempt is made to an unreadable file.
+
+=head3 Short Name Aliases for Attributes
+
+  $byline->f();     # Alias for file
+  $byline->ei();    # Alias for extended_info
+  $byline->haf();   # Alias for header_all_files
+  $byline->hh();    # Alias for header_handler
+  $byline->hs();    # Alias for header_skip
+  $byline->p();     # Alias for processes
+  $byline->su();    # Alias for skip_unreadable
+
+Short name aliases were added in version 1.181980.
+
+Each attribute listed above has a corresponding short name.  This short name
+can also be used as a constructor argument.
 
 =head2 METHODS
 
