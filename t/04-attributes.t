@@ -68,9 +68,8 @@ subtest processes_attribute => sub {
     ok( dies { $byline->processes( 1, 2 ) }, "processes() does not accept list" );
     ok( dies { $byline->processes( [1] ) }, "processes() does not accept arrayref" );
 
-    is( $byline->p(2),        2, "processes p alias is 1" );
-    is( $byline->processes(), 2, "processes is 2" );
-    is( $byline->p(),         2, "processes p alias is 2" );
+    is( $byline->p(1),        1, "processes p alias set to 1" );
+    is( $byline->p(),         1, "processes p alias is 1" );
 };
 
 subtest extended_info => sub {
