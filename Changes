@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+1.181990  2018-07-17 21:42:27-06:00 America/Denver
  * From 1.181981 Don't fail tests (04-attributes.t) when Parallel::WorkUnit not
                  installed
  * From 1.181980 Add skip_unreadable attribute, to skip over unreadable
