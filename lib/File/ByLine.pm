@@ -55,7 +55,7 @@ our $OBJ = File::ByLine::Object->new();
 
 
   #
-  # Functional Interface
+  # Object Oriented Interface (More Powerful!)
   #
 
   # Execute a routine for each line of a file
@@ -693,6 +693,21 @@ Some CPAN clients will automatically try to install recommended dependency, but
 others won't (L<cpan> often, but not always, will; L<cpanm> will not by
 default).  In the cases where it is not automatically installed, you need to
 install L<Parallel::WorkUnit> to get this functionality.
+
+=head1 EXPRESSING APPRECIATION
+
+If this module makes your life easier, or helps make you (or your workplace)
+a ton of money, I always enjoy hearing about it!  My response when I hear that
+someone uses my module is to go back to that module and spend a little time on
+it if I think there's something to improve - it's motivating when you hear
+someone appreciates your work!
+
+I don't seek any money for this - I do this work because I enjoy it.  That
+said, should you want to show appreciation financially, few things would make
+me smile more than knowing that you sent a donation to the Gender Identity
+Center of Colorado (See L<http://giccolorado.org/>).  This organization
+understands TIMTOWTDI in life and, in line with that understanding, provides
+life-saving support to the transgender community.
 
 =cut
 
