@@ -86,12 +86,14 @@ sub easy {
 #
 # The HARD Solution, trying to do file IO on our own.
 #
-# I cheated and used Parallel::WorkUnit for parallization, which lets us
-# build an async work queue and limit it to 8 processes at a time.  Each
-# file is added to the queue, and the Parallel::WorkUnit object allows 8
-# to run at a time.  The EASY solution does this a bit different - it
-# spawns 8 and only 8 processes which read 1/8th of every file.  That
-# turns out to be quicker for the files in question than the below.
+# I cheated and used Parallel::WorkUnit for parallization, rather than
+# rolling parallization from scratch (which would have added at least
+# dozens of lines of code!).  Parallel::WorkUnit lets us build an async
+# work queue and limit it to 8 processes at a time.  Each file is added
+# to the queue, and the Parallel::WorkUnit object allows 8 to run at a
+# time.  The EASY solution does this a bit different - it spawns 8 and
+# only 8 processes which read 1/8th of every file.  That turns out to
+# be quicker for the files in question than the below.
 #
 # I also applied an optimization - once my name is found, go to the next
 # file.  That doesn't happen in easy(), but easy() is STILL faster!
