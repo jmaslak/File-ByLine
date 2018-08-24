@@ -93,7 +93,7 @@ our $OBJ = File::ByLine::Object->new();
   my (@map_result)  = $byline->map( sub { lc($_) }, "file.txt");
 
   # Read an entire file, split into lines
-  my (@result) = readlines "file.txt";
+  my (@result) = $byline->lines("file.txt");
 
   # Alternative way of specifying filenames
   my $byline = File::ByLine->new();
