@@ -22,4 +22,5 @@ Todo Items:
   * Method in map/dofile/grep that says "Don't process any more lines of
     this file" and "don't process any more lines of any file"
   * Grep that returns name of file rather than line that matched
+  * Provide an append_file command
 
