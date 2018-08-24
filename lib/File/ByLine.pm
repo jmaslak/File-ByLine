@@ -56,6 +56,9 @@ our $OBJ = File::ByLine::Object->new();
   # Write out a file
   writefile "file.txt", @lines;  # Since version 2.182360
 
+  # Append to a file
+  appendfile "file.txt", @lines; # Since version 2.182362
+
   #
   # Object Oriented Interface (More Powerful!)
   #
@@ -121,11 +124,11 @@ our @ISA = qw(Exporter);
 
 ## no critic (Modules::ProhibitAutomaticExportation)
 our @EXPORT =
-  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines writefile);
+  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines writefile appendfile);
 ## use critic
 
 our @EXPORT_OK =
-  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines writefile);
+  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines writefile appendfile);
 
 =func dolines
 
@@ -496,6 +499,48 @@ sub writefile ($@) {
     if (@lines) { $lines[-1] =~ s/\n$//s; }
 
     open my $fh, '>', $file;
+    foreach my $line (@lines) {
+        say $fh $line;
+    }
+    close $fh;
+
+    return;
+}
+
+=func appendfile
+
+  appendfile "file.txt", @lines;
+
+This was added in version 2.181862.
+
+This function creates or appends to a file (appending on existing files) and
+writes each line to the end of the file.  Each line (array element) is
+terminated with a newline, except the last line IF the last line ends in a
+newline itself.
+
+I.E. the following will append to a file with three lines, each terminated by
+a newline:
+
+  appendfile "file.txt", "a", "b", "c";
+
+So will this:
+
+  appendfile "file.txt", "a\nb", "c\n";
+
+There is no object-oriented equivilent to this function.
+
+This does not return any value.
+
+=cut
+
+sub appendfile ($@) {
+    my ( $file, @lines ) = @_;
+    if ( !defined($file) ) { die("Must define the filename"); }
+
+    # Last line should have it's newline removed, if applicable
+    if (@lines) { $lines[-1] =~ s/\n$//s; }
+
+    open my $fh, '>>', $file;
     foreach my $line (@lines) {
         say $fh $line;
     }
