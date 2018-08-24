@@ -189,7 +189,7 @@ sub forlines ($&) {
 
 Requires L<Parallel::WorkUnit> to be installed.
 
-Three parameters are requied: a codref, a filename, and number of simultanious
+Three parameters are required: a codref, a filename, and number of simultanious
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -242,7 +242,7 @@ sub parallel_dolines (&$$) {
 
 Requires L<Parallel::WorkUnit> to be installed.
 
-Three parameters are requied: a filename, a codref, and number of simultanious
+Three parameters are required: a filename, a codref, and number of simultanious
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -317,7 +317,7 @@ sub greplines (&$) {
 
   my (@result) = parallel_greplines { m/foo/ } "file.txt", 10;
 
-Three parameters are requied: a coderef, filename, and number of simultanious
+Three parameters are required: a coderef, filename, and number of simultanious
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -403,7 +403,7 @@ sub maplines (&$) {
 
   my (@result) = parallel_maplines { lc($_) } "file.txt", 10;
 
-Three parameters are requied: a coderef, filename, and number of simultanious
+Three parameters are required: a coderef, filename, and number of simultanious
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
