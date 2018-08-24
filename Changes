@@ -1,4 +1,8 @@
 {{$NEXT}}
+ Joelle Maslak <jmaslak@antelope.net>
+ * Reeased as non-trial release
+ * From 1.182360 Added an examples directory
+ * From 1.182360 Added a write routine (writefile())
 
 1.182360  2018-08-23 22:31:08-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
