@@ -53,6 +53,8 @@ our $OBJ = File::ByLine::Object->new();
   # Read an entire file, split into lines
   my (@result) = readlines "file.txt";
 
+  # Write out a file
+  writefile "file.txt", @lines;  # Since version 2.182350
 
   #
   # Object Oriented Interface (More Powerful!)
@@ -119,11 +121,11 @@ our @ISA = qw(Exporter);
 
 ## no critic (Modules::ProhibitAutomaticExportation)
 our @EXPORT =
-  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines);
+  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines writefile);
 ## use critic
 
 our @EXPORT_OK =
-  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines);
+  qw(dolines forlines greplines maplines parallel_dolines parallel_forlines parallel_greplines parallel_maplines readlines writefile);
 
 =func dolines
 
@@ -459,6 +461,47 @@ sub readlines ($) {
     my ($file) = @_;
 
     return $OBJ->lines($file);
+}
+
+=func writefile
+
+  writefile "file.txt", @lines;
+
+This was added in version 2.181850.
+
+This function creates a file (overwriting existing files) and writes each
+line to the file.  Each line (array element) is terminated with a newline,
+except the last line IF the last line ends in a newline itself.
+
+I.E. the following will write a file with three lines, each terminated by
+a newline:
+
+  writefile "file.txt", "a", "b", "c";
+
+So will this:
+
+  writefile "file.txt", "a\nb", "c\n";
+
+There is no object-oriented equivilent to this function.
+
+This does not return any value.
+
+=cut
+
+sub writefile ($@) {
+    my ( $file, @lines ) = @_;
+    if ( !defined($file) ) { die("Must define the filename"); }
+
+    # Last line should have it's newline removed, if applicable
+    if (@lines) { $lines[-1] =~ s/\n$//s; }
+
+    open my $fh, '>', $file;
+    foreach my $line (@lines) {
+        say $fh $line;
+    }
+    close $fh;
+
+    return;
 }
 
 #

@@ -8,7 +8,7 @@ File::ByLine - Line-by-line file access loops
 
 =head1 VERSION
 
-version 1.181990
+version 1.182360
 
 =head1 SYNOPSIS
 
@@ -40,6 +40,8 @@ version 1.181990
   # Read an entire file, split into lines
   my (@result) = readlines "file.txt";
 
+  # Write out a file
+  writefile "file.txt", @lines;  # Since version 2.182350
 
   #
   # Object Oriented Interface (More Powerful!)
@@ -80,7 +82,7 @@ version 1.181990
   my (@map_result)  = $byline->map( sub { lc($_) }, "file.txt");
 
   # Read an entire file, split into lines
-  my (@result) = readlines "file.txt";
+  my (@result) = $byline->lines("file.txt");
 
   # Alternative way of specifying filenames
   my $byline = File::ByLine->new();
@@ -326,6 +328,29 @@ Otherwise, this function is identical to C<maplines()>.
 This function simply returns an array of lines (without newlines) read from
 a file.
 
+=head2 writefile
+
+  writefile "file.txt", @lines;
+
+This was added in version 2.181850.
+
+This function creates a file (overwriting existing files) and writes each
+line to the file.  Each line (array element) is terminated with a newline,
+except the last line IF the last line ends in a newline itself.
+
+I.E. the following will write a file with three lines, each terminated by
+a newline:
+
+  writefile "file.txt", "a", "b", "c";
+
+So will this:
+
+  writefile "file.txt", "a\nb", "c\n";
+
+There is no object-oriented equivilent to this function.
+
+This does not return any value.
+
 =head1 OBJECT ORIENTED INTERFACE
 
 The object oriented interface was implemented in version 1.181860.
@@ -560,9 +585,10 @@ someone appreciates your work!
 I don't seek any money for this - I do this work because I enjoy it.  That
 said, should you want to show appreciation financially, few things would make
 me smile more than knowing that you sent a donation to the Gender Identity
-Center of Colorado (See L<http://giccolorado.org/>).  This organization
-understands TIMTOWTDI in life and, in line with that understanding, provides
-life-saving support to the transgender community.
+Center of Colorado (See L<http://giccolorado.org/> and donation page
+at L<https://tinyurl.com/giccodonation>).  This organization understands
+TIMTOWTDI in life and, in line with that understanding, provides life-saving
+support to the transgender community.
 
 =head1 AUTHOR
 

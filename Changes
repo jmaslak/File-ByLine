@@ -1,6 +1,7 @@
 {{$NEXT}}
  Joelle Maslak <jmaslak@antelope.net>
  * Added an examples directory
+ * Added a write routine (writefile())
 
 1.181990  2018-07-17 21:42:27-06:00 America/Denver
  Joelle Maslak <jmaslak@antelope.net>
