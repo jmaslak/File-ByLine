@@ -54,7 +54,7 @@ our $OBJ = File::ByLine::Object->new();
   my (@result) = readlines "file.txt";
 
   # Write out a file
-  writefile "file.txt", @lines;  # Since version 2.182350
+  writefile "file.txt", @lines;  # Since version 2.182360
 
   #
   # Object Oriented Interface (More Powerful!)
