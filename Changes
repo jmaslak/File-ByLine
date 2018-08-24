@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+1.182360  2018-08-23 22:31:08-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
  * Added an examples directory
  * Added a write routine (writefile())
