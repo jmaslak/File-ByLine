@@ -85,7 +85,7 @@ our $OBJ = File::ByLine::Object->new();
 
   # Skip the header line
   my $byline = File::ByLine->new();
-  $byline->skip_header(1);
+  $byline->header_skip(1);
   $byline->do( sub { foo($_) }, "file.txt");
   my (@grep_result) = $byline->grep( sub { m/foo/ }, "file.txt");
   my (@map_result)  = $byline->map( sub { lc($_) }, "file.txt");
