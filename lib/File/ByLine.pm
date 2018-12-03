@@ -793,10 +793,9 @@ someone appreciates your work!
 I don't seek any money for this - I do this work because I enjoy it.  That
 said, should you want to show appreciation financially, few things would make
 me smile more than knowing that you sent a donation to the Gender Identity
-Center of Colorado (See L<http://giccolorado.org/> and donation page
-at L<https://tinyurl.com/giccodonation>).  This organization understands
-TIMTOWTDI in life and, in line with that understanding, provides life-saving
-support to the transgender community.
+Center of Colorado (See L<http://giccolorado.org/>.  This organization
+understands TIMTOWTDI in life and, in line with that understanding, provides
+life-saving support to the transgender community.
 
 =cut
 
