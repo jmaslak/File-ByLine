@@ -609,6 +609,11 @@ sub _open_and_seek {
         $parts = $size;
     }
 
+    # We have a zero byte file, special case
+    if ( $parts == 0 ) {
+        return ( $fh, -1 );
+    }
+
     # Figure out start and end size
     my $start = int( $part_number * ( $size / $parts ) );
     my $end = int( $start + ( $size / $parts ) );
