@@ -192,7 +192,7 @@ sub forlines ($&) {
 
 Requires L<Parallel::WorkUnit> to be installed.
 
-Three parameters are required: a codref, a filename, and number of simultanious
+Three parameters are required: a codref, a filename, and number of simultaneous
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -209,7 +209,7 @@ this scope.
 
 Note that the file will be read in several chunks, with each chunk being
 processed in a different thread.  This means that the child threads may be
-operating on very different sections of the file simultaniously and no specific
+operating on very different sections of the file simultaneously and no specific
 order of execution of the coderef should be expected!
 
 Because of the mechanism used to split the file into chunks for processing,
@@ -245,7 +245,7 @@ sub parallel_dolines (&$$) {
 
 Requires L<Parallel::WorkUnit> to be installed.
 
-Three parameters are required: a filename, a codref, and number of simultanious
+Three parameters are required: a filename, a codref, and number of simultaneous
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -262,7 +262,7 @@ this scope.
 
 Note that the file will be read in several chunks, with each chunk being
 processed in a different thread.  This means that the child threads may be
-operating on very different sections of the file simultaniously and no specific
+operating on very different sections of the file simultaneously and no specific
 order of execution of the coderef should be expected!
 
 Because of the mechanism used to split the file into chunks for processing,
@@ -320,7 +320,7 @@ sub greplines (&$) {
 
   my (@result) = parallel_greplines { m/foo/ } "file.txt", 10;
 
-Three parameters are required: a coderef, filename, and number of simultanious
+Three parameters are required: a coderef, filename, and number of simultaneous
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -342,7 +342,7 @@ but trivial loops will not speed up.
 
 Note that the file will be read in several chunks, with each chunk being
 processed in a different thread.  This means that the child threads may be
-operating on very different sections of the file simultaniously and no specific
+operating on very different sections of the file simultaneously and no specific
 order of execution of the coderef should be expected!  However, the results
 will be returned in the same order as C<greplines()> would return them.
 
@@ -406,7 +406,7 @@ sub maplines (&$) {
 
   my (@result) = parallel_maplines { lc($_) } "file.txt", 10;
 
-Three parameters are required: a coderef, filename, and number of simultanious
+Three parameters are required: a coderef, filename, and number of simultaneous
 child threads to use.
 
 Instead of a single filename, an arrayref can be passed in, in which case the
@@ -428,7 +428,7 @@ but trivial loops will not speed up.
 
 Note that the file will be read in several chunks, with each chunk being
 processed in a different thread.  This means that the child threads may be
-operating on very different sections of the file simultaniously and no specific
+operating on very different sections of the file simultaneously and no specific
 order of execution of the coderef should be expected!  However, the results
 will be returned in the same order as C<maplines()> would return them.
 
