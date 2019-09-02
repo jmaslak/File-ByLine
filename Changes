@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+1.192450  2019-09-02 09:41:30-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
  * Handle zero byte files
 
