@@ -792,7 +792,7 @@ someone appreciates your work!
 
 I don't seek any money for this - I do this work because I enjoy it.  That
 said, should you want to show appreciation financially, few things would make
-me smile more than knowing that you sent a donation to the Gender-related
+me smile more than knowing that you sent a donation to a Gender-related
 charity.
 
 =cut

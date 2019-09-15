@@ -1,4 +1,7 @@
 {{$NEXT}}
+ Joelle Maslak <jmaslak@antelope.net>
+ * From 1.192450 Handle zero byte files
+ * From 1.192451 Minor documentation change by MANWAR
 
 1.192451  2019-09-02 12:39:09-06:00 America/Denver (TRIAL RELEASE)
  Joelle Maslak <jmaslak@antelope.net>
