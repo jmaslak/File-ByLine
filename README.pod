@@ -8,7 +8,7 @@ File::ByLine - Line-by-line file access loops
 
 =head1 VERSION
 
-version 1.192451
+version 1.192590
 
 =head1 SYNOPSIS
 
@@ -611,10 +611,8 @@ someone appreciates your work!
 
 I don't seek any money for this - I do this work because I enjoy it.  That
 said, should you want to show appreciation financially, few things would make
-me smile more than knowing that you sent a donation to the Gender Identity
-Center of Colorado (See L<http://giccolorado.org/>.  This organization
-understands TIMTOWTDI in life and, in line with that understanding, provides
-life-saving support to the transgender community.
+me smile more than knowing that you sent a donation to a Gender-related
+charity.
 
 =head1 AUTHOR
 
